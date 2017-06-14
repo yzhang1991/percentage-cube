@@ -10,6 +10,8 @@ import pctcube.database.TestTable;
 import pctcube.utils.TestArgumentParser;
 import pctcube.utils.TestPermutationGenerator;
 
+// Run all test cases
+
 @RunWith(Suite.class)
 @SuiteClasses({ TestPercentageCube.class,
                 TestArgumentParser.class,
