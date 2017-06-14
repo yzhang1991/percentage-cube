@@ -1,2 +1,4 @@
 language: java
-script: ant TestAllSuite
+script: ant build TestAllSuite
+jdk:
+  - oraclejdk8

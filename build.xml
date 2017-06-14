@@ -105,11 +105,11 @@
             <classpath refid="percentage-cube.classpath"/>
         </junit>
     </target>
-    <target name="test">
+    <target name="TestAllSuite">
         <mkdir dir="${junit.output.dir}"/>
         <junit fork="yes" printsummary="withOutAndErr">
             <formatter type="xml"/>
-            <test name="pctcube.test" todir="${junit.output.dir}"/>
+            <test name="pctcube.TestAllSuite" todir="${junit.output.dir}"/>
             <jvmarg line="-ea"/>
             <classpath refid="percentage-cube.classpath"/>
         </junit>
