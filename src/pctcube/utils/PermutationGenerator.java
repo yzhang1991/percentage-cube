@@ -16,6 +16,7 @@ public class PermutationGenerator<T> implements Iterable<ArrayList<T>>, Iterator
     public void addElement(T element) {
         m_elements.add(element);
         m_positions.add(m_positions.size());
+
         reset();
     }
 
@@ -27,8 +28,13 @@ public class PermutationGenerator<T> implements Iterable<ArrayList<T>>, Iterator
         }
     }
 
-    public void reset() {
+    public void reset(int numOfSelectedElements) {
         m_beforeFirst = true;
+        m_numOfSelectedItems = numOfSelectedElements;
+    }
+
+    public void reset() {
+        reset(m_elements.size());
     }
 
     @Override
@@ -93,7 +99,7 @@ public class PermutationGenerator<T> implements Iterable<ArrayList<T>>, Iterator
 
     private ArrayList<T> getCurrentPermutation() {
         ArrayList<T> retval = new ArrayList<>();
-        for (int i = 0; i < m_positions.size(); i++) {
+        for (int i = 0; i < m_numOfSelectedItems; i++) {
             retval.add(m_elements.get(m_positions.get(i)));
         }
         return retval;
@@ -102,4 +108,5 @@ public class PermutationGenerator<T> implements Iterable<ArrayList<T>>, Iterator
     private boolean m_beforeFirst = true;
     private List<T> m_elements = new ArrayList<>();
     private List<Integer> m_positions = new ArrayList<>();
+    private int m_numOfSelectedItems = 0;
 }

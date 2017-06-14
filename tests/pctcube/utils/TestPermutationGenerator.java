@@ -9,8 +9,8 @@ import org.junit.Test;
 
 public class TestPermutationGenerator {
 
-    @Test
-    public void testPermutationGenerator() {
+    private void permutationGeneratorTestHelperFunction(
+            ArrayList<Integer> expectedSequence, int numOfSelectedElements) {
         PermutationGenerator<Integer> pgen = new PermutationGenerator<>();
         int elemCount = 3;
         Integer[] elements = new Integer[elemCount];
@@ -18,15 +18,28 @@ public class TestPermutationGenerator {
             elements[i] = i;
         }
         pgen.addElements(elements);
-        ArrayList<Integer> expectedSequence =
-                new ArrayList<>(Arrays.asList(0, 1, 2, 0, 2, 1, 1, 0, 2, 1, 2, 0, 2, 0, 1, 2, 1, 0));
         ArrayList<Integer> actualSequence = new ArrayList<>();
+        pgen.reset(numOfSelectedElements);
         for (ArrayList<Integer> permutation : pgen) {
             for (Integer elem : permutation) {
                 actualSequence.add(elem);
             }
         }
         assertEquals(expectedSequence, actualSequence);
+    }
+
+    @Test
+    public void testAllPermutation() {
+        ArrayList<Integer> expectedSequence =
+                new ArrayList<>(Arrays.asList(0, 1, 2, 0, 2, 1, 1, 0, 2, 1, 2, 0, 2, 0, 1, 2, 1, 0));
+        permutationGeneratorTestHelperFunction(expectedSequence, 3);
+    }
+
+    @Test
+    public void testPartialPermutation() {
+        ArrayList<Integer> expectedSequence =
+                new ArrayList<>(Arrays.asList(0, 1, 0, 2, 1, 0, 1, 2, 2, 0, 2, 1));
+        permutationGeneratorTestHelperFunction(expectedSequence, 2);
     }
 
 }
