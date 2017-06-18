@@ -111,6 +111,24 @@
             <classpath refid="percentage-cube.classpath"/>
         </junit>
     </target>
+    <target name="TestPercentageCube.testPercentageCubeTable">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="pctcube.TestPercentageCube" todir="${junit.output.dir}"/>
+            <jvmarg line="-ea"/>
+            <classpath refid="percentage-cube.classpath"/>
+        </junit>
+    </target>
+    <target name="TestPercentageAggregation">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="pctcube.TestPercentageAggregation" todir="${junit.output.dir}"/>
+            <jvmarg line="-ea"/>
+            <classpath refid="percentage-cube.classpath"/>
+        </junit>
+    </target>
     <target name="junitreport">
         <junitreport todir="${junit.output.dir}">
             <fileset dir="${junit.output.dir}">

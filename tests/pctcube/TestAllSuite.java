@@ -14,6 +14,7 @@ import pctcube.utils.TestPermutationGenerator;
 
 @RunWith(Suite.class)
 @SuiteClasses({ TestPercentageCube.class,
+                TestPercentageAggregation.class,
                 TestArgumentParser.class,
                 TestColumn.class,
                 TestDatabase.class,

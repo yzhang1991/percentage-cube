@@ -2,7 +2,6 @@ package pctcube.sql;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import pctcube.PercentageCube;
 import pctcube.PercentageCube.PercentageCubeVisitor;
@@ -57,14 +56,7 @@ public final class CreateStatementGenerator implements ColumnVisitor, TableVisit
 
     @Override
     public void visit(Column column) {
-        String columnName = column.getColumnName();
-        // If column name has space or some other symbols, enclose it with double quotation mark.
-        if (PAT_SHOULD_ADD_QUOTATION_MARK.matcher(columnName).matches()) {
-            m_builder.append("\"").append(columnName).append("\" ");
-        }
-        else {
-            m_builder.append(columnName).append(" ");
-        }
+        m_builder.append(column.getQuotedColumnName()).append(" ");
         m_builder.append(column.getDataType().getTypeName());
         // For variable-length column, append the column size after the column type.
         if (column.getDataType().hasPrecisionAndScale()) {
@@ -94,6 +86,4 @@ public final class CreateStatementGenerator implements ColumnVisitor, TableVisit
     private StringBuilder m_builder;
     private String m_indentation;
     private boolean m_dropIfExists = false;
-
-    private static final Pattern PAT_SHOULD_ADD_QUOTATION_MARK = Pattern.compile(".*[^a-zA-Z0-9_].*");
 }

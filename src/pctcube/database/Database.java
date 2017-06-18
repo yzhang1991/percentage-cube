@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import pctcube.Errors;
 import pctcube.sql.CreateStatementGenerator;
@@ -31,6 +32,10 @@ public final class Database {
         m_tables.put(table.getTableName(), table);
     }
 
+    public int getNextTempTableSeqId() {
+        return m_tempTableSeqId.getAndIncrement();
+    }
+
     public List<Table> getTables() {
         return new ArrayList<Table>(m_tables.values());
     }
@@ -49,4 +54,6 @@ public final class Database {
 
     // TempTableCleanupAction will access it
     protected Map<String, Table> m_tables = new LinkedHashMap<>();
+
+    private final AtomicInteger m_tempTableSeqId = new AtomicInteger(0);
 }

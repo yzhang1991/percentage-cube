@@ -1,6 +1,7 @@
 package pctcube.database;
 
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import pctcube.Errors;
 import pctcube.sql.CreateStatementGenerator;
@@ -135,6 +136,14 @@ public final class Column {
         return m_tableBelongedTo;
     }
 
+    public String getQuotedColumnName() {
+        // If column name has space or some other symbols, enclose it with double quotation mark.
+        if (PAT_SHOULD_ADD_QUOTATION_MARK.matcher(m_name).matches()) {
+            return "\"" + m_name + "\"";
+        }
+        return m_name;
+    }
+
     private String m_name;
     private DataType m_dataType;
     private int m_size = -1;
@@ -149,4 +158,5 @@ public final class Column {
     public static final int DEFAULT_SCALE = 15;
 
     private static final Logger m_logger = Logger.getLogger(Column.class.getName());
+    private static final Pattern PAT_SHOULD_ADD_QUOTATION_MARK = Pattern.compile(".*[^a-zA-Z0-9_].*");
 }

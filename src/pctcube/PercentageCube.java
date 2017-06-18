@@ -1,6 +1,7 @@
 package pctcube;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -16,7 +17,12 @@ public final class PercentageCube {
         void visit(PercentageCube cube);
     }
 
+    public PercentageCube(Database db) {
+        m_database = db;
+    }
+
     public PercentageCube(Database db, String[] args) {
+        m_database = db;
         ArgumentParser parser = new ArgumentParser();
         parser.parse(args);
 
@@ -46,12 +52,24 @@ public final class PercentageCube {
         }
     }
 
+    public void setFactTable(Table factTable) {
+        m_factTable = factTable;
+    }
+
     public Table getFactTable() {
         return m_factTable;
     }
 
+    public void addDimension(Column c) {
+        m_dimensions.add(c);
+    }
+
     public List<Column> getDimensions() {
-        return m_dimensions;
+        return Collections.unmodifiableList(m_dimensions);
+    }
+
+    public void setMeasure(Column c) {
+        m_measure = c;
     }
 
     public Column getMeasure() {
@@ -70,10 +88,10 @@ public final class PercentageCube {
         return builder.toString();
     }
 
+    private Database m_database;
     private Table m_factTable;
     private List<Column> m_dimensions = new ArrayList<>();
     private Column m_measure;
-    private boolean m_reuse = false;
 
     private static final Logger m_logger = Logger.getLogger(PercentageCube.class.getName());
 }
