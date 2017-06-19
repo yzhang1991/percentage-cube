@@ -80,18 +80,23 @@ public final class ArgumentParser {
 
     public Argument getArgument(String argumentName) {
         Argument arg = m_parsedArguments.get(argumentName);
-        if (arg == null) {
-            Errors.ARGUMENT_NOT_FOUND.throwIt(m_logger, argumentName);
-        }
         return arg;
     }
 
     public List<String> getArgumentValues(String argumentName) {
-        return getArgument(argumentName).getValues();
+        Argument arg = m_parsedArguments.get(argumentName);
+        if (arg == null) {
+            return null;
+        }
+        return arg.getValues();
     }
 
     public String getArgumentValue(String argumentName) {
-        return getArgument(argumentName).getValue(0);
+        Argument arg = m_parsedArguments.get(argumentName);
+        if (arg == null) {
+            return null;
+        }
+        return arg.getValue(0);
     }
 
     private String m_argDelimiter = ";";

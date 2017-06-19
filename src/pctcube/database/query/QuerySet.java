@@ -22,16 +22,16 @@ public abstract class QuerySet {
         m_queries.clear();
     }
 
-    protected void addQuery(String query) {
+    public void addQuery(String query) {
         m_queries.add(query);
     }
 
-    protected void addAllQueries(List<String> queries) {
+    public void addAllQueries(List<String> queries) {
         m_queries.addAll(queries);
     }
 
-    protected String getIndentationString() {
-        return m_indentation;
+    protected String getIndentationString(int indentLevel) {
+        return String.join("", Collections.nCopies(indentLevel, m_indentation));
     }
 
     @Override
@@ -39,6 +39,9 @@ public abstract class QuerySet {
         StringBuilder builder = new StringBuilder();
         for (String query : m_queries) {
             builder.append(query).append("\n");
+        }
+        if (m_queries.size() > 0) {
+            builder.setLength(builder.length() - 1);
         }
         return builder.toString();
     }

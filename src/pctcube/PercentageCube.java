@@ -9,16 +9,47 @@ import pctcube.database.Column;
 import pctcube.database.Database;
 import pctcube.database.Table;
 import pctcube.database.query.CreateTable;
+import pctcube.database.query.QuerySet;
 import pctcube.utils.ArgumentParser;
+import pctcube.utils.PermutationGenerator;
 
-public final class PercentageCube {
+public final class PercentageCube extends QuerySet {
 
     public interface PercentageCubeVisitor {
         void visit(PercentageCube cube);
     }
 
-    public PercentageCube(Database db) {
-        m_database = db;
+    public void accept(PercentageCubeVisitor visitor) {
+        visitor.visit(this);
+    }
+
+    public void evaluate() {
+        clear();
+        // Create table, drop the old one if it exists.
+        Table cubeTable = PercentageCubeTableFactory.getTable(this);
+        if (m_database.getTableByName(cubeTable.getTableName()) != null) {
+            m_database.dropTable(cubeTable);
+        }
+        m_database.addTable(cubeTable);
+        CreateTable ct = new CreateTable();
+        ct.setAddDropIfExists(true);
+        cubeTable.accept(ct);
+        addAllQueries(ct.getQueries());
+
+        PermutationGenerator<Column> pgen = new PermutationGenerator<>();
+        for (Column c : m_dimensions) {
+            pgen.addElement(c);
+        }
+        for (int selectedColumnCount = m_dimensions.size();
+                selectedColumnCount >= 1; selectedColumnCount--) {
+            pgen.reset(selectedColumnCount);
+            // Get individual level aggregation first.
+
+            for (ArrayList<Column> permutation : pgen) {
+
+            }
+        }
+
     }
 
     public PercentageCube(Database db, String[] args) {
@@ -34,6 +65,9 @@ public final class PercentageCube {
 
         // Dimension list
         List<String> dimensionNames = parser.getArgumentValues("dimensions");
+        if (dimensionNames == null) {
+            Errors.INVALID_PERCENTAGE_CUBE_ARGS.throwIt(m_logger, "dimensions");
+        }
         for (String dimensonName : dimensionNames) {
             Column dimension = m_factTable.getColumnByName(dimensonName);
             if (dimension == null) {
@@ -50,47 +84,92 @@ public final class PercentageCube {
         if (m_measure == null) {
             Errors.INVALID_PERCENTAGE_CUBE_ARGS.throwIt(m_logger, "measure");
         }
-    }
 
-    public void setFactTable(Table factTable) {
-        m_factTable = factTable;
+        // Method
+        String method = parser.getArgumentValue("method");
+        if (method != null) {
+            if (method.equals("groupby")) {
+                m_evaluationMethod = EvaluationMethod.GROUPBY;
+            }
+            else if (method.equals("olap")) {
+                m_evaluationMethod = EvaluationMethod.OLAP;
+            }
+            else {
+                Errors.INVALID_PERCENTAGE_CUBE_ARGS.throwIt(m_logger, "method");
+            }
+        }
+
+        // pruning
+        String pruning = parser.getArgumentValue("pruning");
+        if (pruning != null) {
+            if (pruning.equals("none")) {
+                m_pruningStrategy = PruningStrategy.NONE;
+            }
+            else if (pruning.equals("direct")) {
+                m_pruningStrategy = PruningStrategy.DIRECT;
+            }
+            else if (pruning.equals("cascade")) {
+                m_pruningStrategy = PruningStrategy.CASCADE;
+            }
+            else {
+                Errors.INVALID_PERCENTAGE_CUBE_ARGS.throwIt(m_logger, "pruning");
+            }
+        }
+
+        // topk
+        String topk = parser.getArgumentValue("topk");
+        if (topk != null) {
+            try {
+                m_topk = Integer.valueOf(topk);
+            }
+            catch (NumberFormatException e) {
+                Errors.INVALID_PERCENTAGE_CUBE_ARGS.throwIt(m_logger, "topk");
+            }
+        }
+
+        // incremental
+        m_incremental = Boolean.valueOf(parser.getArgumentValue("incremental"));
+
+        evaluate();
     }
 
     public Table getFactTable() {
         return m_factTable;
     }
 
-    public void addDimension(Column c) {
-        m_dimensions.add(c);
-    }
-
     public List<Column> getDimensions() {
         return Collections.unmodifiableList(m_dimensions);
-    }
-
-    public void setMeasure(Column c) {
-        m_measure = c;
     }
 
     public Column getMeasure() {
         return m_measure;
     }
 
-    public void accept(PercentageCubeVisitor visitor) {
-        visitor.visit(this);
+    public PruningStrategy getPruningStrategy() {
+        return m_pruningStrategy;
     }
 
-    @Override
-    public String toString() {
-        CreateTable visitor = new CreateTable();
-        accept(visitor);
-        return visitor.toString();
+    public EvaluationMethod getEvaluationMethod() {
+        return m_evaluationMethod;
+    }
+
+    // zero means disabled.
+    public int getTopK() {
+        return m_topk;
+    }
+
+    public boolean isIncremental() {
+        return m_incremental;
     }
 
     private Database m_database;
     private Table m_factTable;
     private List<Column> m_dimensions = new ArrayList<>();
     private Column m_measure;
+    private PruningStrategy m_pruningStrategy = PruningStrategy.NONE;
+    private EvaluationMethod m_evaluationMethod = EvaluationMethod.GROUPBY;
+    private int m_topk = 0;
+    private boolean m_incremental = false;
 
     private static final Logger m_logger = Logger.getLogger(PercentageCube.class.getName());
 }

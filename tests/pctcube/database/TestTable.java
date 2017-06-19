@@ -18,7 +18,7 @@ public class TestTable {
                              "    str1 VARCHAR(80),\n" +
                              "    str2 VARCHAR(15),\n" +
                              "    col3 DATE,\n" +
-                             "    num DECIMAL(16,5)\n);\n";
+                             "    num DECIMAL(16,5)\n);";
         Table table = new Table("testTable");
         table.addColumn(new Column("col0", DataType.INTEGER));
         table.addColumn(new Column("str1", DataType.VARCHAR));

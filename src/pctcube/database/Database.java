@@ -32,6 +32,10 @@ public final class Database {
         m_tables.put(table.getTableName(), table);
     }
 
+    public void dropTable(Table table) {
+        m_tables.remove(table.getTableName());
+    }
+
     public int getNextTempTableSeqId() {
         return m_tempTableSeqId.getAndIncrement();
     }

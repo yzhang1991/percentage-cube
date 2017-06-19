@@ -7,8 +7,8 @@ import pctcube.PercentageCube.PercentageCubeVisitor;
 import pctcube.PercentageCubeTableFactory;
 import pctcube.database.Column;
 import pctcube.database.Database;
-import pctcube.database.Table;
 import pctcube.database.Database.DatabaseVisitor;
+import pctcube.database.Table;
 import pctcube.database.Table.TableVisitor;
 
 /**
@@ -44,7 +44,7 @@ public final class CreateTable extends QuerySet implements TableVisitor, Databas
         builder.append(table.getTableName()).append(" (\n");
         List<Column> columns = table.getColumns();
         for (int i = 0; i < columns.size(); i++) {
-            builder.append(getIndentationString());
+            builder.append(getIndentationString(1));
             Column c = columns.get(i);
             builder.append(c.toString());
             if (i != columns.size() - 1) {

@@ -1,7 +1,5 @@
 package pctcube;
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.Test;
 
 import pctcube.database.Column;
@@ -17,11 +15,17 @@ public class TestPercentageAggregation {
         pa.addTotalByKey(m_col1);
         pa.addTotalByKey(m_col2);
         pa.addBreakdownByKey(m_col3);
-        String expectedDescription = "Percentage aggregation on fact table 'T'\n" +
-                                     "MEASURE: measure\n" +
-                                     "TOTAL BY: col1,col2\n" +
-                                     "BREAK DOWN BY: col3";
-        assertEquals(expectedDescription, pa.toString());
+        pa.setReuseResults(true);
+//        String expectedDescription = "Percentage aggregation on fact table 'T'\n" +
+//                                     "MEASURE: measure\n" +
+//                                     "TOTAL BY: col1,col2\n" +
+//                                     "BREAK DOWN BY: col3";
+//        assertEquals(expectedDescription, pa.toString());
+
+
+
+        pa.evaluateWithGroupByMethod();
+        System.out.println(pa.toString());
     }
 
     protected static final Database m_database = new Database();

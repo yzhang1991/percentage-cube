@@ -13,6 +13,13 @@ import pctcube.database.query.CreateTable;
 
 public class TestPercentageCube {
 
+    @Test
+    public void testPercentageCube() {
+        PercentageCube cube = new PercentageCube(TestPercentageAggregation.m_database,
+                new String[] {"table=T ;dimensions=col1,col2,col3; measure=measure;"});
+        System.out.println(cube.toString());
+    }
+
     private void verifyCubeInstantiationFails(String argument, String expectedErrorMessage) {
         try {
             @SuppressWarnings("unused")
@@ -28,25 +35,27 @@ public class TestPercentageCube {
     public void testInvalidCubeParameters() {
         // table
         verifyCubeInstantiationFails("dimensions=col1,col2,col3; measure=measure;",
-                String.format(Errors.ARGUMENT_NOT_FOUND.getMessage(), "table"));
+                String.format(Errors.INVALID_PERCENTAGE_CUBE_ARGS.getMessage(), "table"));
         verifyCubeInstantiationFails("table=;dimensions=col1,col2,col3; measure=measure;",
                 String.format(Errors.INVALID_PERCENTAGE_CUBE_ARGS.getMessage(), "table"));
         verifyCubeInstantiationFails("table=nonexist ;dimensions=col1,col2,col3; measure=measure;",
                 String.format(Errors.INVALID_PERCENTAGE_CUBE_ARGS.getMessage(), "table"));
         // dimensions
         verifyCubeInstantiationFails("table=T ;;measure=measure;",
-                String.format(Errors.ARGUMENT_NOT_FOUND.getMessage(), "dimensions"));
+                String.format(Errors.INVALID_PERCENTAGE_CUBE_ARGS.getMessage(), "dimensions"));
         verifyCubeInstantiationFails("table=T ;dimensions=; measure=measure;",
                 String.format(Errors.INVALID_PERCENTAGE_CUBE_ARGS.getMessage(), "dimensions"));
         verifyCubeInstantiationFails("table=T ;dimensions=nonexist; measure=measure;",
                 String.format(Errors.INVALID_PERCENTAGE_CUBE_ARGS.getMessage(), "dimensions"));
         // measure
         verifyCubeInstantiationFails("table=T ;dimensions=col1,col2,col3;;;",
-                String.format(Errors.ARGUMENT_NOT_FOUND.getMessage(), "measure"));
+                String.format(Errors.INVALID_PERCENTAGE_CUBE_ARGS.getMessage(), "measure"));
         verifyCubeInstantiationFails("table=T ;dimensions=col1,col2,col3; measure=;",
                 String.format(Errors.INVALID_PERCENTAGE_CUBE_ARGS.getMessage(), "measure"));
         verifyCubeInstantiationFails("table=T ;dimensions=col1,col2,col3; measure=abc;",
                 String.format(Errors.INVALID_PERCENTAGE_CUBE_ARGS.getMessage(), "measure"));
+
+        // need to test more arguments
     }
 
     @Test
@@ -78,7 +87,7 @@ public class TestPercentageCube {
                              "    col2 VARCHAR(80),\n" +
                              "    col3 VARCHAR(80),\n" +
                              "    \"measure%\" FLOAT NOT NULL\n" +
-                             ");\n";
+                             ");";
         assertEquals(expectedDDL, createStatementGen.toString());
     }
 }

@@ -14,6 +14,8 @@ public final class Table {
         void visit(Table table);
     }
 
+    public Table() { }
+
     public Table(String name) {
         m_name = name;
     }

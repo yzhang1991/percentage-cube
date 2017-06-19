@@ -42,7 +42,7 @@ public class PermutationGenerator<T> implements Iterable<ArrayList<T>>, Iterator
         if (m_beforeFirst) {
             return true;
         }
-        if (m_positions.size() <= 1) {
+        if (m_positions.size() <= 1 || m_numOfSelectedItems == 0) {
             return false;
         }
         int i = m_positions.size() - 2;
@@ -64,7 +64,7 @@ public class PermutationGenerator<T> implements Iterable<ArrayList<T>>, Iterator
             m_beforeFirst = false;
             return getCurrentPermutation();
         }
-        if (m_positions.size() <= 1) {
+        if (m_positions.size() <= 1 || m_numOfSelectedItems == 0) {
             throw new NoSuchElementException();
         }
         int i = m_positions.size() - 2;

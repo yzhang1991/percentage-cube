@@ -40,6 +40,9 @@ public class TestPermutationGenerator {
         ArrayList<Integer> expectedSequence =
                 new ArrayList<>(Arrays.asList(0, 1, 0, 2, 1, 0, 1, 2, 2, 0, 2, 1));
         permutationGeneratorTestHelperFunction(expectedSequence, 2);
+
+        expectedSequence = new ArrayList<>();
+        permutationGeneratorTestHelperFunction(expectedSequence, 0);
     }
 
 }

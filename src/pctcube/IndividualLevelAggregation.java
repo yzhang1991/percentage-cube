@@ -6,14 +6,14 @@ import pctcube.database.Table;
 import pctcube.database.query.CreateTable;
 import pctcube.database.query.QuerySet;
 
-public class TotalLevelAggregation extends QuerySet implements PercentageAggregationVisitor {
+public class IndividualLevelAggregation extends QuerySet implements PercentageAggregationVisitor {
 
-    protected TotalLevelAggregation() { }
+    protected IndividualLevelAggregation() { }
 
     @Override
     public void visit(PercentageAggregation agg) {
         m_pctAgg = agg;
-        m_pctAgg.m_aggTotal = this;
+        m_pctAgg.m_aggIndv = this;
         createTempTable();
         generateQuery();
     }
@@ -27,18 +27,21 @@ public class TotalLevelAggregation extends QuerySet implements PercentageAggrega
             builder.append(totalByKey.getQuotedColumnName());
             builder.append(", ");
         }
+        for (Column breakdownByKey : m_pctAgg.getBreakdownByKeys()) {
+            builder.append(breakdownByKey.getQuotedColumnName());
+            builder.append(", ");
+        }
         builder.append("SUM(").append(m_pctAgg.getMeasure().getQuotedColumnName());
         builder.append(") FROM ");
-        if (m_pctAgg.reuseResults()) {
-            builder.append(m_pctAgg.m_aggIndv.getTempTableName());
-        }
-        else {
-            builder.append(m_pctAgg.getFactTable().getTableName());
-        }
+        builder.append(m_pctAgg.getFactTable().getTableName());
         builder.append("\n").append(getIndentationString(1));
         builder.append("GROUP BY ");
         for (Column totalByKey : m_pctAgg.getTotalByKeys()) {
             builder.append(totalByKey.getQuotedColumnName());
+            builder.append(", ");
+        }
+        for (Column breakdownByKey : m_pctAgg.getBreakdownByKeys()) {
+            builder.append(breakdownByKey.getQuotedColumnName());
             builder.append(", ");
         }
         builder.setLength(builder.length() - 2);
@@ -54,6 +57,10 @@ public class TotalLevelAggregation extends QuerySet implements PercentageAggrega
         // Add total by keys
         for (Column totalByKey : m_pctAgg.getTotalByKeys()) {
             tempTable.addColumn(new Column(totalByKey));
+        }
+        // Add break down by keys
+        for (Column breakdownByKey : m_pctAgg.getBreakdownByKeys()) {
+            tempTable.addColumn(new Column(breakdownByKey));
         }
         // Add SUM(measure)
         tempTable.addColumn(new Column(m_pctAgg.getMeasure()));
@@ -71,5 +78,5 @@ public class TotalLevelAggregation extends QuerySet implements PercentageAggrega
 
     private PercentageAggregation m_pctAgg;
     private String m_tempTableName;
-    private static final String TABLE_NAME_PREFIX = "Ttotal_";
+    private static final String TABLE_NAME_PREFIX = "Tindv_";
 }

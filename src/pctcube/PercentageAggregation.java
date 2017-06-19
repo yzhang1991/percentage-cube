@@ -7,13 +7,35 @@ import java.util.List;
 import pctcube.database.Column;
 import pctcube.database.Database;
 import pctcube.database.Table;
+import pctcube.database.query.QuerySet;
 
-public class PercentageAggregation {
+public class PercentageAggregation extends QuerySet {
 
-    public PercentageAggregation(Database db, Table factTable, Column measure) {
+    protected interface PercentageAggregationVisitor {
+        void visit(PercentageAggregation agg);
+    }
+
+    public PercentageAggregation(
+            Database db, Table factTable, Column measure) {
         m_database = db;
         m_factTable = factTable;
         m_measure = measure;
+    }
+
+    public void accept(PercentageAggregationVisitor visitor) {
+        visitor.visit(this);
+    }
+
+    public void evaluateWithGroupByMethod() {
+        // must create the IndividualLevelAggregation first, because
+        // the total level may depend on the individual level.
+        clear();
+        accept(new IndividualLevelAggregation());
+        accept(new TotalLevelAggregation());
+    }
+
+    public void evaluateWithOLAPMethod() {
+
     }
 
     public void addTotalByKey(Column key) {
@@ -44,22 +66,12 @@ public class PercentageAggregation {
         return m_database;
     }
 
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder("Percentage aggregation on fact table '");
-        builder.append(m_factTable.getTableName()).append("'\n");
-        builder.append("MEASURE: ").append(m_measure.getQuotedColumnName());
-        builder.append("\nTOTAL BY: ");
-        for (Column c : m_totalByKeys) {
-            builder.append(c.getQuotedColumnName()).append(",");
-        }
-        builder.setLength(builder.length() - 1);
-        builder.append("\nBREAK DOWN BY: ");
-        for (Column c : m_breakdownByKeys) {
-            builder.append(c.getQuotedColumnName()).append(",");
-        }
-        builder.setLength(builder.length() - 1);
-        return builder.toString();
+    public boolean reuseResults() {
+        return m_reuseResults;
+    }
+
+    public void setReuseResults(boolean value) {
+        m_reuseResults = value;
     }
 
     private final List<Column> m_totalByKeys = new ArrayList<>();
@@ -67,4 +79,9 @@ public class PercentageAggregation {
     private final Column m_measure;
     private final Database m_database;
     private final Table m_factTable;
+
+    private boolean m_reuseResults = false;
+    protected IndividualLevelAggregation m_aggIndv;
+    protected TotalLevelAggregation m_aggTotal;
+    protected FinalJoin m_finalJoin;
 }

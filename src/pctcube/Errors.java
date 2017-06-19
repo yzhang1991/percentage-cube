@@ -16,9 +16,6 @@ public enum Errors {
     INVALID_VALUE_DELIMITER (
             IllegalArgumentException.class,
             "The value delimiter cannot be null and has to be of length 1"),
-    ARGUMENT_NOT_FOUND (
-            IllegalArgumentException.class,
-            "Argument '%s' is not found"),
 
     // For database and sql generators
     SETTING_SIZE_FOR_FIXED_LENGTH_COLUMN (

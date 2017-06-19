@@ -38,13 +38,12 @@ public class TestDatabase {
                              ");\n" +
                              "CREATE TABLE table2 (\n" +
                              "    col0 INTEGER\n" +
-                             ");\n";
+                             ");";
         assertEquals(expectedDDL, db.toString());
 
         TempTableCleanupAction cleaner = new TempTableCleanupAction();
         db.accept(cleaner);
         assertTrue(db.getTableByName("table2") != null);
-        cleaner.clear();
         table2.setTempTable(true);
         db.accept(cleaner);
         assertTrue(db.getTableByName("table2") == null);
