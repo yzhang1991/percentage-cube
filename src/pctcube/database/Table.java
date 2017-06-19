@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import pctcube.Errors;
-import pctcube.sql.CreateStatementGenerator;
+import pctcube.database.query.CreateTable;
 
 public final class Table {
 
@@ -16,6 +16,14 @@ public final class Table {
 
     public Table(String name) {
         m_name = name;
+    }
+
+    public Table(Table copyFrom) {
+        m_name = copyFrom.m_name;
+        m_temporary = copyFrom.m_temporary;
+        for (Column c : copyFrom.m_columns.values()) {
+            addColumn(new Column(c));
+        }
     }
 
     public void accept(TableVisitor visitor) {
@@ -56,10 +64,9 @@ public final class Table {
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
-        TableVisitor visitor = new CreateStatementGenerator(builder);
+        CreateTable visitor = new CreateTable();
         accept(visitor);
-        return builder.toString();
+        return visitor.toString();
     }
 
     private String m_name;

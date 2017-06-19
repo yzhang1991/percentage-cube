@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import pctcube.Errors;
-import pctcube.sql.CreateStatementGenerator;
+import pctcube.database.query.CreateTable;
 
 public final class Database {
 
@@ -46,10 +46,9 @@ public final class Database {
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
-        DatabaseVisitor visitor = new CreateStatementGenerator(builder);
+        CreateTable visitor = new CreateTable();
         accept(visitor);
-        return builder.toString();
+        return visitor.toString();
     }
 
     // TempTableCleanupAction will access it

@@ -4,13 +4,8 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 import pctcube.Errors;
-import pctcube.sql.CreateStatementGenerator;
 
 public final class Column {
-
-    public interface ColumnVisitor {
-        void visit(Column column);
-    }
 
     public Column(String name, DataType dataType) {
         m_name = name.trim();
@@ -45,10 +40,6 @@ public final class Column {
         m_dataType = columnType;
         setPrecision(precision);
         setScale(scale);
-    }
-
-    public void accept(ColumnVisitor visitor) {
-        visitor.visit(this);
     }
 
     public String getColumnName() {
@@ -123,11 +114,23 @@ public final class Column {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        ColumnVisitor visitor = new CreateStatementGenerator(builder);
-        accept(visitor);
+        builder.append(getQuotedColumnName()).append(" ");
+        builder.append(getDataType().getTypeName());
+        // For variable-length column, append the column size after the column type.
+        if (getDataType().hasPrecisionAndScale()) {
+            builder.append("(").append(getPrecision());
+            builder.append(",").append(getScale()).append(")");
+        }
+        else if (getDataType().isVariableLengthType()) {
+            builder.append("(").append(getSize()).append(")");
+        }
+        if (! isNullable()) {
+            builder.append(" NOT NULL");
+        }
         return builder.toString();
     }
 
+    // Only Table.addColumn() should be able to perform this action.
     protected void associateWithTable(Table table) {
         m_tableBelongedTo = table;
     }

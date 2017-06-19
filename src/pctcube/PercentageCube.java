@@ -8,7 +8,7 @@ import java.util.logging.Logger;
 import pctcube.database.Column;
 import pctcube.database.Database;
 import pctcube.database.Table;
-import pctcube.sql.CreateStatementGenerator;
+import pctcube.database.query.CreateTable;
 import pctcube.utils.ArgumentParser;
 
 public final class PercentageCube {
@@ -82,10 +82,9 @@ public final class PercentageCube {
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
-        PercentageCubeVisitor visitor = new CreateStatementGenerator(builder);
+        CreateTable visitor = new CreateTable();
         accept(visitor);
-        return builder.toString();
+        return visitor.toString();
     }
 
     private Database m_database;

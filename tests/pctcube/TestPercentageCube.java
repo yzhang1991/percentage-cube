@@ -9,7 +9,7 @@ import org.junit.Test;
 import pctcube.database.Column;
 import pctcube.database.DataType;
 import pctcube.database.Table;
-import pctcube.sql.CreateStatementGenerator;
+import pctcube.database.query.CreateTable;
 
 public class TestPercentageCube {
 
@@ -67,8 +67,7 @@ public class TestPercentageCube {
     public void testPercentageCubeTable() {
         PercentageCube cube = new PercentageCube(
                 TestPercentageAggregation.m_database, new String[]{"table=T ;dimensions=col1,col2,col3; measure=measure;"});
-        StringBuilder builder = new StringBuilder();
-        CreateStatementGenerator createStatementGen = new CreateStatementGenerator(builder);
+        CreateTable createStatementGen = new CreateTable();
         createStatementGen.setAddDropIfExists(true);
         cube.accept(createStatementGen);
         String expectedDDL = "DROP TABLE IF EXISTS pct;\n" +
@@ -80,6 +79,6 @@ public class TestPercentageCube {
                              "    col3 VARCHAR(80),\n" +
                              "    \"measure%\" FLOAT NOT NULL\n" +
                              ");\n";
-        assertEquals(expectedDDL, builder.toString());
+        assertEquals(expectedDDL, createStatementGen.toString());
     }
 }

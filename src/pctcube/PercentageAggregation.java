@@ -10,10 +10,6 @@ import pctcube.database.Table;
 
 public class PercentageAggregation {
 
-    public interface PercentageAggregationVisitor {
-        void visit(PercentageAggregation agg);
-    }
-
     public PercentageAggregation(Database db, Table factTable, Column measure) {
         m_database = db;
         m_factTable = factTable;
@@ -40,19 +36,29 @@ public class PercentageAggregation {
         return m_measure;
     }
 
-    public void accept(PercentageAggregationVisitor visitor) {
-        visitor.visit(this);
-    }
-
     public Table getFactTable() {
         return m_factTable;
     }
 
+    protected Database getDatabase() {
+        return m_database;
+    }
+
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
-        PercentageAggregationDescriptor visitor = new PercentageAggregationDescriptor(builder);
-        accept(visitor);
+        StringBuilder builder = new StringBuilder("Percentage aggregation on fact table '");
+        builder.append(m_factTable.getTableName()).append("'\n");
+        builder.append("MEASURE: ").append(m_measure.getQuotedColumnName());
+        builder.append("\nTOTAL BY: ");
+        for (Column c : m_totalByKeys) {
+            builder.append(c.getQuotedColumnName()).append(",");
+        }
+        builder.setLength(builder.length() - 1);
+        builder.append("\nBREAK DOWN BY: ");
+        for (Column c : m_breakdownByKeys) {
+            builder.append(c.getQuotedColumnName()).append(",");
+        }
+        builder.setLength(builder.length() - 1);
         return builder.toString();
     }
 

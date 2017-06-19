@@ -6,7 +6,6 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 import pctcube.Errors;
-import pctcube.database.Database.DatabaseVisitor;
 
 public class TestDatabase {
 
@@ -36,15 +35,16 @@ public class TestDatabase {
                              "    str1 VARCHAR(80),\n" +
                              "    str2 VARCHAR(15),\n" +
                              "    col3 DATE NOT NULL\n" +
-                             ");\n\n" +
+                             ");\n" +
                              "CREATE TABLE table2 (\n" +
                              "    col0 INTEGER\n" +
-                             ");\n\n";
+                             ");\n";
         assertEquals(expectedDDL, db.toString());
 
-        DatabaseVisitor cleaner = new TempTableCleanupAction();
+        TempTableCleanupAction cleaner = new TempTableCleanupAction();
         db.accept(cleaner);
         assertTrue(db.getTableByName("table2") != null);
+        cleaner.clear();
         table2.setTempTable(true);
         db.accept(cleaner);
         assertTrue(db.getTableByName("table2") == null);
