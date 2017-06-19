@@ -30,7 +30,7 @@ public class PermutationGenerator<T> implements Iterable<ArrayList<T>>, Iterator
 
     public void reset(int numOfSelectedElements) {
         m_beforeFirst = true;
-        m_numOfSelectedItems = numOfSelectedElements;
+        m_numOfSelectedElements = numOfSelectedElements;
     }
 
     public void reset() {
@@ -42,7 +42,7 @@ public class PermutationGenerator<T> implements Iterable<ArrayList<T>>, Iterator
         if (m_beforeFirst) {
             return true;
         }
-        if (m_positions.size() <= 1 || m_numOfSelectedItems == 0) {
+        if (m_positions.size() <= 1 || m_numOfSelectedElements == 0) {
             return false;
         }
         int i = m_positions.size() - 2;
@@ -64,7 +64,7 @@ public class PermutationGenerator<T> implements Iterable<ArrayList<T>>, Iterator
             m_beforeFirst = false;
             return getCurrentPermutation();
         }
-        if (m_positions.size() <= 1 || m_numOfSelectedItems == 0) {
+        if (m_positions.size() <= 1 || m_numOfSelectedElements == 0) {
             throw new NoSuchElementException();
         }
         int i = m_positions.size() - 2;
@@ -99,14 +99,22 @@ public class PermutationGenerator<T> implements Iterable<ArrayList<T>>, Iterator
 
     private ArrayList<T> getCurrentPermutation() {
         ArrayList<T> retval = new ArrayList<>();
-        for (int i = 0; i < m_numOfSelectedItems; i++) {
+        for (int i = 0; i < m_numOfSelectedElements; i++) {
             retval.add(m_elements.get(m_positions.get(i)));
         }
         return retval;
     }
 
+    public String getCurrentPermuationString() {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < m_numOfSelectedElements; i++) {
+            builder.append(m_positions.get(i));
+        }
+        return builder.toString();
+    }
+
     private boolean m_beforeFirst = true;
     private List<T> m_elements = new ArrayList<>();
     private List<Integer> m_positions = new ArrayList<>();
-    private int m_numOfSelectedItems = 0;
+    private int m_numOfSelectedElements = 0;
 }

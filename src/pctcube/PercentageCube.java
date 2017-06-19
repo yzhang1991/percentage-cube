@@ -8,10 +8,8 @@ import java.util.logging.Logger;
 import pctcube.database.Column;
 import pctcube.database.Database;
 import pctcube.database.Table;
-import pctcube.database.query.CreateTable;
 import pctcube.database.query.QuerySet;
 import pctcube.utils.ArgumentParser;
-import pctcube.utils.PermutationGenerator;
 
 public final class PercentageCube extends QuerySet {
 
@@ -25,30 +23,10 @@ public final class PercentageCube extends QuerySet {
 
     public void evaluate() {
         clear();
-        // Create table, drop the old one if it exists.
-        Table cubeTable = PercentageCubeTableFactory.getTable(this);
-        if (m_database.getTableByName(cubeTable.getTableName()) != null) {
-            m_database.dropTable(cubeTable);
-        }
-        m_database.addTable(cubeTable);
-        CreateTable ct = new CreateTable();
-        ct.setAddDropIfExists(true);
-        cubeTable.accept(ct);
-        addAllQueries(ct.getQueries());
+        accept(new PercentageCubeCreateAction());
+        accept(new PercentageCubeAggregateAction());
 
-        PermutationGenerator<Column> pgen = new PermutationGenerator<>();
-        for (Column c : m_dimensions) {
-            pgen.addElement(c);
-        }
-        for (int selectedColumnCount = m_dimensions.size();
-                selectedColumnCount >= 1; selectedColumnCount--) {
-            pgen.reset(selectedColumnCount);
-            // Get individual level aggregation first.
 
-            for (ArrayList<Column> permutation : pgen) {
-
-            }
-        }
 
     }
 
@@ -160,6 +138,10 @@ public final class PercentageCube extends QuerySet {
 
     public boolean isIncremental() {
         return m_incremental;
+    }
+
+    public Database getDatabase() {
+        return m_database;
     }
 
     private Database m_database;

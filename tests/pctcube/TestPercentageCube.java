@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import pctcube.database.Column;
 import pctcube.database.DataType;
+import pctcube.database.Database;
 import pctcube.database.Table;
 import pctcube.database.query.CreateTable;
 
@@ -15,7 +16,7 @@ public class TestPercentageCube {
 
     @Test
     public void testPercentageCube() {
-        PercentageCube cube = new PercentageCube(TestPercentageAggregation.m_database,
+        PercentageCube cube = new PercentageCube(m_database,
                 new String[] {"table=T ;dimensions=col1,col2,col3; measure=measure;"});
         System.out.println(cube.toString());
     }
@@ -23,7 +24,7 @@ public class TestPercentageCube {
     private void verifyCubeInstantiationFails(String argument, String expectedErrorMessage) {
         try {
             @SuppressWarnings("unused")
-            PercentageCube cube = new PercentageCube(TestPercentageAggregation.m_database, new String[]{argument});
+            PercentageCube cube = new PercentageCube(m_database, new String[]{argument});
             fail("Expected an exception, but nothing happened.");
         }
         catch (IllegalArgumentException ex) {
@@ -60,22 +61,23 @@ public class TestPercentageCube {
 
     @Test
     public void testPercentageCubeTableSchema() {
-        PercentageCube cube = new PercentageCube(TestPercentageAggregation.m_database,
+        PercentageCube cube = new PercentageCube(m_database,
                 new String[]{"table=T ;dimensions=col1,col2,col3; measure=measure;"});
         Table expectedPctCubeTable = new Table("pct");
         expectedPctCubeTable.addColumn(new Column("total by", DataType.VARCHAR).setNullable(false));
         expectedPctCubeTable.addColumn(new Column("break down by", DataType.VARCHAR).setNullable(false));
-        expectedPctCubeTable.addColumn(TestPercentageAggregation.m_col1);
-        expectedPctCubeTable.addColumn(TestPercentageAggregation.m_col2);
-        expectedPctCubeTable.addColumn(TestPercentageAggregation.m_col3);
+        expectedPctCubeTable.addColumn(m_col1);
+        expectedPctCubeTable.addColumn(m_col2);
+        expectedPctCubeTable.addColumn(m_col3);
         expectedPctCubeTable.addColumn(new Column("measure%", DataType.FLOAT).setNullable(false));
-        assertEquals(expectedPctCubeTable.toString(), cube.toString());
+        assertEquals(expectedPctCubeTable.toString(),
+                PercentageCubeTableFactory.getTable(cube).toString());
     }
 
     @Test
     public void testPercentageCubeTable() {
         PercentageCube cube = new PercentageCube(
-                TestPercentageAggregation.m_database, new String[]{"table=T ;dimensions=col1,col2,col3; measure=measure;"});
+                m_database, new String[]{"table=T ;dimensions=col1,col2,col3; measure=measure;"});
         CreateTable createStatementGen = new CreateTable();
         createStatementGen.setAddDropIfExists(true);
         cube.accept(createStatementGen);
@@ -89,5 +91,19 @@ public class TestPercentageCube {
                              "    \"measure%\" FLOAT NOT NULL\n" +
                              ");";
         assertEquals(expectedDDL, createStatementGen.toString());
+    }
+
+    protected static final Database m_database = new Database();
+    protected static final Table m_table = new Table("T");
+    protected static final Column m_col1 = new Column("col1", DataType.INTEGER);
+    protected static final Column m_col2 = new Column("col2", DataType.VARCHAR);
+    protected static final Column m_col3 = new Column("col3", DataType.VARCHAR);
+    protected static final Column m_measure = new Column("measure", DataType.FLOAT);
+    static {
+        m_table.addColumn(m_col1);
+        m_table.addColumn(m_col2);
+        m_table.addColumn(m_col3);
+        m_table.addColumn(m_measure);
+        m_database.addTable(m_table);
     }
 }
