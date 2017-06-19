@@ -7,21 +7,23 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
-public class TestPermutationGenerator {
+public class TestCombinationGenerator {
+
     @Test
-    public void testAllPermutation() {
+    public void test() {
         ArrayList<Integer> expectedSequence =
-                new ArrayList<>(Arrays.asList(0, 1, 2, 0, 2, 1, 1, 0, 2, 1, 2, 0, 2, 0, 1, 2, 1, 0));
-        PermutationGenerator<Integer> pgen = new PermutationGenerator<>();
-        int elemCount = 3;
+                new ArrayList<>(Arrays.asList(0, 1, 0, 2, 0, 3, 1, 2, 1, 3, 2, 3));
+        CombinationGenerator<Integer> cgen = new CombinationGenerator<>();
+        int elemCount = 4;
         Integer[] elements = new Integer[elemCount];
         for (int i = 0; i < elemCount; i++) {
             elements[i] = i;
         }
-        pgen.addElements(elements);
+        cgen.addElements(elements);
         ArrayList<Integer> actualSequence = new ArrayList<>();
-        pgen.reset();
-        for (ArrayList<Integer> permutation : pgen) {
+        cgen.setSelectedElementsCount(2);
+
+        for (ArrayList<Integer> permutation : cgen) {
             for (Integer elem : permutation) {
                 actualSequence.add(elem);
             }
