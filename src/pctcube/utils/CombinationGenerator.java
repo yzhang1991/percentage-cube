@@ -10,7 +10,7 @@ public class CombinationGenerator<T> implements Iterable<ArrayList<T>>, Iterator
 
     public CombinationGenerator() { }
 
-    public CombinationGenerator(T[] elements) {
+    public CombinationGenerator(List<T> elements) {
         addElements(elements);
     }
 
@@ -20,7 +20,7 @@ public class CombinationGenerator<T> implements Iterable<ArrayList<T>>, Iterator
         reset();
     }
 
-    public void addElements(T[] elements) {
+    public void addElements(List<T> elements) {
         if (elements != null) {
             for (T element : elements) {
                 addElement(element);

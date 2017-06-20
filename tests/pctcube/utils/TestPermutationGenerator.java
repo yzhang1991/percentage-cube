@@ -14,11 +14,9 @@ public class TestPermutationGenerator {
                 new ArrayList<>(Arrays.asList(0, 1, 2, 0, 2, 1, 1, 0, 2, 1, 2, 0, 2, 0, 1, 2, 1, 0));
         PermutationGenerator<Integer> pgen = new PermutationGenerator<>();
         int elemCount = 3;
-        Integer[] elements = new Integer[elemCount];
         for (int i = 0; i < elemCount; i++) {
-            elements[i] = i;
+            pgen.addElement(i);
         }
-        pgen.addElements(elements);
         ArrayList<Integer> actualSequence = new ArrayList<>();
         pgen.reset();
         for (ArrayList<Integer> permutation : pgen) {

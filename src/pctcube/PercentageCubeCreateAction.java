@@ -16,6 +16,7 @@ public class PercentageCubeCreateAction implements PercentageCubeVisitor {
         ct.setAddDropIfExists(true);
         cubeTable.accept(ct);
         cube.addAllQueries(ct.getQueries());
+        cube.setTargetTable(cubeTable);
     }
 
 }

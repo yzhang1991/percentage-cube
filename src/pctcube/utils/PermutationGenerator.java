@@ -9,7 +9,7 @@ public class PermutationGenerator<T> implements Iterable<ArrayList<T>>, Iterator
 
     public PermutationGenerator() { }
 
-    public PermutationGenerator(T[] elements) {
+    public PermutationGenerator(List<T> elements) {
         addElements(elements);
     }
 
@@ -20,7 +20,7 @@ public class PermutationGenerator<T> implements Iterable<ArrayList<T>>, Iterator
         reset();
     }
 
-    public void addElements(T[] elements) {
+    public void addElements(List<T> elements) {
         if (elements != null) {
             for (T element : elements) {
                 addElement(element);
@@ -100,10 +100,16 @@ public class PermutationGenerator<T> implements Iterable<ArrayList<T>>, Iterator
         return retval;
     }
 
-    public String getCurrentPermuationString() {
+    public String getCurrentPermuationString(int count) {
+        if (count > m_positions.size()) {
+            count = m_positions.size();
+        }
         StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < m_positions.size(); i++) {
-            builder.append(m_positions.get(i));
+        for (int i = 0; i < count; i++) {
+            builder.append(m_positions.get(i)).append("_");
+        }
+        if (count > 0) {
+            builder.setLength(builder.length() - 1);
         }
         return builder.toString();
     }

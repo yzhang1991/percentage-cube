@@ -9,19 +9,23 @@ public class AggregationTempTable extends Table {
 
     public AggregationTempTable(List<Integer> selectionFlags) {
         m_selectionFlags = new ArrayList<>(selectionFlags);
-        StringBuilder builder = new StringBuilder(TEMP_TABLE_PREFIX);
-        for (int i = 0; i < m_selectionFlags.size(); i++) {
-            if (m_selectionFlags.get(i) > 0) {
-                builder.append(i).append("_");
-            }
-        }
-        builder.setLength(builder.length() - 1);
-        setTableName(builder.toString());
+        setTableName(getAggregationTempTableName(m_selectionFlags));
         setTempTable(true);
     }
 
     public void setSelectionFlags(List<Integer> flags) {
         m_selectionFlags = new ArrayList<>(flags);
+    }
+
+    public static String getAggregationTempTableName(List<Integer> selectionFlags) {
+        StringBuilder builder = new StringBuilder(TEMP_TABLE_PREFIX);
+        for (int i = 0; i < selectionFlags.size(); i++) {
+            if (selectionFlags.get(i) > 0) {
+                builder.append(i).append("_");
+            }
+        }
+        builder.setLength(builder.length() - 1);
+        return builder.toString();
     }
 
     public boolean canDeriveFrom(AggregationTempTable otherTable) {
@@ -41,5 +45,5 @@ public class AggregationTempTable extends Table {
 
     private List<Integer> m_selectionFlags;
 
-    private static final String TEMP_TABLE_PREFIX = "TEMP_AGG_";
+    protected static final String TEMP_TABLE_PREFIX = "TEMP_AGG_";
 }
