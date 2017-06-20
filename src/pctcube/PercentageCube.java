@@ -25,9 +25,6 @@ public final class PercentageCube extends QuerySet {
         clear();
         accept(new PercentageCubeCreateAction());
         accept(new PercentageCubeAggregateAction());
-
-
-
     }
 
     public PercentageCube(Database db, String[] args) {
@@ -107,8 +104,6 @@ public final class PercentageCube extends QuerySet {
 
         // incremental
         m_incremental = Boolean.valueOf(parser.getArgumentValue("incremental"));
-
-        evaluate();
     }
 
     public Table getFactTable() {

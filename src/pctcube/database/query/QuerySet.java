@@ -30,7 +30,7 @@ public abstract class QuerySet {
         m_queries.addAll(queries);
     }
 
-    protected String getIndentationString(int indentLevel) {
+    public String getIndentationString(int indentLevel) {
         return String.join("", Collections.nCopies(indentLevel, m_indentation));
     }
 
@@ -38,7 +38,7 @@ public abstract class QuerySet {
     public String toString() {
         StringBuilder builder = new StringBuilder();
         for (String query : m_queries) {
-            builder.append(query).append("\n");
+            builder.append(query).append("\n\n");
         }
         if (m_queries.size() > 0) {
             builder.setLength(builder.length() - 1);

@@ -8,7 +8,7 @@ import java.util.Map;
 import pctcube.Errors;
 import pctcube.database.query.CreateTable;
 
-public final class Table {
+public class Table {
 
     public interface TableVisitor {
         void visit(Table table);

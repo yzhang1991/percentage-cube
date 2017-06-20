@@ -1,5 +1,7 @@
 package pctcube.database;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -13,12 +15,16 @@ public final class TempTableCleanupAction extends QuerySet implements DatabaseVi
     public void visit(Database database) {
         clear();
         DropTable dropTbl = new DropTable();
+        List<Table> tablesToRemove = new ArrayList<>();
         for (Table t : database.m_tables.values()) {
             if (t.isTempTable()) {
-                t.accept(dropTbl);
-                database.m_tables.remove(t.getTableName());
-                m_logger.log(Level.INFO, m_traceMessage, t.getTableName());
+                tablesToRemove.add(t);
             }
+        }
+        for (Table t : tablesToRemove) {
+            t.accept(dropTbl);
+            database.m_tables.remove(t.getTableName());
+            m_logger.log(Level.INFO, m_traceMessage, t.getTableName());
         }
         addAllQueries(dropTbl.getQueries());
     }

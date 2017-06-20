@@ -1,6 +1,7 @@
 package pctcube.utils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -31,12 +32,13 @@ public class CombinationGenerator<T> implements Iterable<ArrayList<T>>, Iterator
         m_beforeFirst = true;
     }
 
-    public void setSelectedElementsCount(int count) {
-        m_selectedElementsCount = count;
+    public void setNumOfElementsToSelect(int value) {
+        m_numOfElementsToSelect = value;
+        reset();
     }
 
-    public int getSelectedElementsCount() {
-        return m_selectedElementsCount;
+    public int getNumOfElementsToSelect() {
+        return m_numOfElementsToSelect;
     }
 
     private void select(int numOfElements) {
@@ -73,7 +75,7 @@ public class CombinationGenerator<T> implements Iterable<ArrayList<T>>, Iterator
     @Override
     public ArrayList<T> next() {
         if (m_beforeFirst) {
-            select(m_selectedElementsCount);
+            select(m_numOfElementsToSelect);
             m_beforeFirst = false;
             return getCurrentCombination();
         }
@@ -120,16 +122,12 @@ public class CombinationGenerator<T> implements Iterable<ArrayList<T>>, Iterator
         return retval;
     }
 
-    public String getCurrentPermuationString() {
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < m_elements.size(); i++) {
-            builder.append(m_elements.get(i));
-        }
-        return builder.toString();
+    public List<Integer> getCurrentSelectionFlags() {
+        return Collections.unmodifiableList(m_selected);
     }
 
     private boolean m_beforeFirst = true;
-    private int m_selectedElementsCount = 0;
+    private int m_numOfElementsToSelect = 0;
     private List<T> m_elements = new ArrayList<>();
     private List<Integer> m_selected = new ArrayList<>();
 }

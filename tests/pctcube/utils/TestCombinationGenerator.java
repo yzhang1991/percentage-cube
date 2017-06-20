@@ -21,7 +21,7 @@ public class TestCombinationGenerator {
         }
         cgen.addElements(elements);
         ArrayList<Integer> actualSequence = new ArrayList<>();
-        cgen.setSelectedElementsCount(2);
+        cgen.setNumOfElementsToSelect(2);
 
         for (ArrayList<Integer> permutation : cgen) {
             for (Integer elem : permutation) {

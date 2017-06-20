@@ -35,10 +35,10 @@ public class TestDatabase {
                              "    str1 VARCHAR(80),\n" +
                              "    str2 VARCHAR(15),\n" +
                              "    col3 DATE NOT NULL\n" +
-                             ");\n" +
+                             ");\n\n" +
                              "CREATE TABLE table2 (\n" +
                              "    col0 INTEGER\n" +
-                             ");";
+                             ");\n";
         assertEquals(expectedDDL, db.toString());
 
         TempTableCleanupAction cleaner = new TempTableCleanupAction();

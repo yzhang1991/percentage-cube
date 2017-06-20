@@ -10,6 +10,7 @@ import pctcube.database.Column;
 import pctcube.database.DataType;
 import pctcube.database.Database;
 import pctcube.database.Table;
+import pctcube.database.TempTableCleanupAction;
 import pctcube.database.query.CreateTable;
 
 public class TestPercentageCube {
@@ -18,6 +19,10 @@ public class TestPercentageCube {
     public void testPercentageCube() {
         PercentageCube cube = new PercentageCube(m_database,
                 new String[] {"table=T ;dimensions=col1,col2,col3; measure=measure;"});
+        cube.evaluate();
+        TempTableCleanupAction tempTableCleanupAction = new TempTableCleanupAction();
+        m_database.accept(tempTableCleanupAction);
+        cube.addAllQueries(tempTableCleanupAction.getQueries());
         System.out.println(cube.toString());
     }
 
@@ -81,7 +86,7 @@ public class TestPercentageCube {
         CreateTable createStatementGen = new CreateTable();
         createStatementGen.setAddDropIfExists(true);
         cube.accept(createStatementGen);
-        String expectedDDL = "DROP TABLE IF EXISTS pct;\n" +
+        String expectedDDL = "DROP TABLE IF EXISTS pct;\n\n" +
                              "CREATE TABLE pct (\n" +
                              "    \"total by\" VARCHAR(80) NOT NULL,\n" +
                              "    \"break down by\" VARCHAR(80) NOT NULL,\n" +
@@ -89,7 +94,7 @@ public class TestPercentageCube {
                              "    col2 VARCHAR(80),\n" +
                              "    col3 VARCHAR(80),\n" +
                              "    \"measure%\" FLOAT NOT NULL\n" +
-                             ");";
+                             ");\n";
         assertEquals(expectedDDL, createStatementGen.toString());
     }
 
@@ -99,6 +104,7 @@ public class TestPercentageCube {
     protected static final Column m_col2 = new Column("col2", DataType.VARCHAR);
     protected static final Column m_col3 = new Column("col3", DataType.VARCHAR);
     protected static final Column m_measure = new Column("measure", DataType.FLOAT);
+
     static {
         m_table.addColumn(m_col1);
         m_table.addColumn(m_col2);
