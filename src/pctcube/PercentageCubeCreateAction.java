@@ -2,7 +2,7 @@ package pctcube;
 
 import pctcube.PercentageCube.PercentageCubeVisitor;
 import pctcube.database.Table;
-import pctcube.database.query.CreateTable;
+import pctcube.database.query.CreateTableQuerySet;
 
 public class PercentageCubeCreateAction implements PercentageCubeVisitor {
 
@@ -12,7 +12,7 @@ public class PercentageCubeCreateAction implements PercentageCubeVisitor {
         Table cubeTable = PercentageCubeTableFactory.getTable(cube);
         cube.getDatabase().dropTable(cubeTable);
         cube.getDatabase().addTable(cubeTable);
-        CreateTable ct = new CreateTable();
+        CreateTableQuerySet ct = new CreateTableQuerySet();
         ct.setAddDropIfExists(true);
         cubeTable.accept(ct);
         cube.addAllQueries(ct.getQueries());

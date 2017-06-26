@@ -17,7 +17,7 @@ import pctcube.database.Table.TableVisitor;
  * For a percentage cube, get the cube table schema from PercentageCubeTableFactory and create the DDL for it.
  * @author yzhang
  */
-public final class CreateTable extends QuerySet implements TableVisitor, DatabaseVisitor, PercentageCubeVisitor {
+public final class CreateTableQuerySet extends QuerySet implements TableVisitor, DatabaseVisitor, PercentageCubeVisitor {
 
     @Override
     public void visit(PercentageCube cube) {

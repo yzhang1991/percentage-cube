@@ -6,7 +6,7 @@ import pctcube.PercentageCube.PercentageCubeVisitor;
 import pctcube.database.Column;
 import pctcube.database.DataType;
 import pctcube.database.Table;
-import pctcube.database.query.CreateTable;
+import pctcube.database.query.CreateTableQuerySet;
 import pctcube.utils.CombinationGenerator;
 
 public class PercentageCubeAggregateAction implements PercentageCubeVisitor {
@@ -15,7 +15,7 @@ public class PercentageCubeAggregateAction implements PercentageCubeVisitor {
     @Override
     public void visit(PercentageCube cube) {
         StringBuilder aggregationQueryBuilder = new StringBuilder();
-        CreateTable createTable = new CreateTable();
+        CreateTableQuerySet createTable = new CreateTableQuerySet();
         createTable.setAddDropIfExists(true);
 
         List<Column> dimensions = cube.getDimensions();

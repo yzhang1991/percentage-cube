@@ -30,6 +30,7 @@ public class PercentageCubeAssembler implements PercentageCubeVisitor {
             for (List<Column> selection : dimensionSelector) {
                 String aggIndvTableName = AggregationTempTable.getAggregationTempTableName(dimensionSelector.getCurrentSelectionFlags());
                 PermutationGenerator<Column> pgen = new PermutationGenerator<>(selection);
+                List<Integer> selectedIndices = dimensionSelector.getCurrentSelectionIndices();
                 for (List<Column> permutation : pgen) {
                     for (int totalByKeyCount = 0; totalByKeyCount < selection.size(); totalByKeyCount++) {
                         queryBuilder.setLength(0);
@@ -37,11 +38,15 @@ public class PercentageCubeAssembler implements PercentageCubeVisitor {
                         queryBuilder.append("\n").append(cube.getIndentationString(1));
                         queryBuilder.append("SELECT '");
 
+                        StringBuilder totalLevelAggTableName = new StringBuilder(AggregationTempTable.TEMP_TABLE_PREFIX);
+
                         for (int i = 0; i < totalByKeyCount; i++) {
                             queryBuilder.append(permutation.get(i).getColumnName()).append(",");
+                            totalLevelAggTableName.append(selectedIndices.get(pgen.getElementIndexAtPosition(i))).append("_");
                         }
                         if (totalByKeyCount > 0) {
                             queryBuilder.setLength(queryBuilder.length() - 1);
+                            totalLevelAggTableName.setLength(totalLevelAggTableName.length() - 1);
                         }
                         queryBuilder.append("', '");
                         for (int i = totalByKeyCount; i < permutation.size(); i++) {
@@ -67,11 +72,10 @@ public class PercentageCubeAssembler implements PercentageCubeVisitor {
                         queryBuilder.append(" AS ").append(cube.getMeasure().getQuotedColumnName());
                         queryBuilder.append("\n").append(cube.getIndentationString(1)).append("FROM ");
 
-                        String totalLevelAggTableName = AggregationTempTable.TEMP_TABLE_PREFIX + pgen.getCurrentPermuationString(totalByKeyCount);
                         if (totalByKeyCount == 0) {
                             queryBuilder.append(PercentageCubeAggregateAction.TEMP_AGG_COUNT);
                         }
-                        else if (cube.getDatabase().getTableByName(totalLevelAggTableName) != null) {
+                        else if (cube.getDatabase().getTableByName(totalLevelAggTableName.toString()) != null) {
                             queryBuilder.append(totalLevelAggTableName);
                         }
                         else {
@@ -97,9 +101,6 @@ public class PercentageCubeAssembler implements PercentageCubeVisitor {
                 }
             }
         }
-
-
-
     }
 
     private void assembleOLAP(PercentageCube cube) {

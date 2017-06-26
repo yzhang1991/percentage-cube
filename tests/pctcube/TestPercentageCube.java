@@ -4,22 +4,34 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.sql.SQLException;
+
 import org.junit.Test;
 
 import pctcube.database.Column;
 import pctcube.database.DataType;
 import pctcube.database.Database;
+import pctcube.database.DbConnection;
+import pctcube.database.JDBCConfig;
 import pctcube.database.Table;
 import pctcube.database.TempTableCleanupAction;
-import pctcube.database.query.CreateTable;
+import pctcube.database.query.CreateTableQuerySet;
 
 public class TestPercentageCube {
 
     @Test
-    public void testPercentageCube() {
+    public void testPercentageCube() throws ClassNotFoundException, SQLException {
+        CreateTableQuerySet ct = new CreateTableQuerySet();
+        ct.setAddDropIfExists(true);
+        m_database.accept(ct);
+        DbConnection conn = new DbConnection(new JDBCConfig());
+        conn.executeQuerySet(ct);
+
         PercentageCube cube = new PercentageCube(m_database,
                 new String[] {"table=T ;dimensions=col1,col2,col3; measure=measure;"});
         cube.evaluate();
+        conn.executeQuerySet(cube);
+
         TempTableCleanupAction tempTableCleanupAction = new TempTableCleanupAction();
         m_database.accept(tempTableCleanupAction);
         cube.addAllQueries(tempTableCleanupAction.getQueries());
@@ -83,7 +95,7 @@ public class TestPercentageCube {
     public void testPercentageCubeTable() {
         PercentageCube cube = new PercentageCube(
                 m_database, new String[]{"table=T ;dimensions=col1,col2,col3; measure=measure;"});
-        CreateTable createStatementGen = new CreateTable();
+        CreateTableQuerySet createStatementGen = new CreateTableQuerySet();
         createStatementGen.setAddDropIfExists(true);
         cube.accept(createStatementGen);
         String expectedDDL = "DROP TABLE IF EXISTS pct;\n\n" +

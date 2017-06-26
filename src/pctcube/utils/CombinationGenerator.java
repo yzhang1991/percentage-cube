@@ -126,6 +126,16 @@ public class CombinationGenerator<T> implements Iterable<ArrayList<T>>, Iterator
         return Collections.unmodifiableList(m_selected);
     }
 
+    public List<Integer> getCurrentSelectionIndices() {
+        List<Integer> retval = new ArrayList<>();
+        for (int i = 0; i < m_elements.size(); i++) {
+            if (m_selected.get(i) > 0) {
+                retval.add(i);
+            }
+        }
+        return retval;
+    }
+
     private boolean m_beforeFirst = true;
     private int m_numOfElementsToSelect = 0;
     private List<T> m_elements = new ArrayList<>();

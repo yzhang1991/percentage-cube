@@ -6,7 +6,7 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 import pctcube.Errors;
-import pctcube.database.query.CreateTable;
+import pctcube.database.query.CreateTableQuerySet;
 
 public class TestTable {
 
@@ -26,7 +26,7 @@ public class TestTable {
         table.addColumn(new Column("col3", DataType.DATE));
         table.addColumn(new Column("num", DataType.DECIMAL, 16, 5));
 
-        CreateTable visitor = new CreateTable();
+        CreateTableQuerySet visitor = new CreateTableQuerySet();
         table.accept(visitor);
         assertEquals(expectedDDL, visitor.toString());
 

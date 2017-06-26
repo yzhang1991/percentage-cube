@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import pctcube.Errors;
-import pctcube.database.query.CreateTable;
+import pctcube.database.query.CreateTableQuerySet;
 
 public class Table {
 
@@ -66,7 +66,7 @@ public class Table {
 
     @Override
     public String toString() {
-        CreateTable visitor = new CreateTable();
+        CreateTableQuerySet visitor = new CreateTableQuerySet();
         accept(visitor);
         return visitor.toString();
     }

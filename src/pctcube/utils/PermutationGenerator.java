@@ -83,6 +83,7 @@ public class PermutationGenerator<T> implements Iterable<ArrayList<T>>, Iterator
 
     @Override
     public Iterator<ArrayList<T>> iterator() {
+        reset();
         return this;
     }
 
@@ -100,18 +101,8 @@ public class PermutationGenerator<T> implements Iterable<ArrayList<T>>, Iterator
         return retval;
     }
 
-    public String getCurrentPermuationString(int count) {
-        if (count > m_positions.size()) {
-            count = m_positions.size();
-        }
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < count; i++) {
-            builder.append(m_positions.get(i)).append("_");
-        }
-        if (count > 0) {
-            builder.setLength(builder.length() - 1);
-        }
-        return builder.toString();
+    public int getElementIndexAtPosition(int pos) {
+        return m_positions.get(pos);
     }
 
     private boolean m_beforeFirst = true;
