@@ -19,6 +19,7 @@ import pctcube.database.query.CreateTableQuerySet;
 
 public class TestPercentageCube {
 
+    // This test does not verify the result, need to improve
     @Test
     public void testPercentageCube() throws ClassNotFoundException, SQLException {
         CreateTableQuerySet ct = new CreateTableQuerySet();

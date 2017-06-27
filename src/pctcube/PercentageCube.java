@@ -70,7 +70,7 @@ public final class PercentageCube extends QuerySet {
         return m_targetTable;
     }
 
-    public void setTargetTable(Table targetTable) {
+    protected void setTargetTable(Table targetTable) {
         m_targetTable = targetTable;
     }
 

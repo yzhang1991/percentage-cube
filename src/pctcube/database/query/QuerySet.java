@@ -6,16 +6,16 @@ import java.util.List;
 
 public abstract class QuerySet {
 
-    public QuerySet() {
-        setIndentation(4);
+    private static final int INDENTATION_SIZE = 4;
+
+    private List<String> m_queries = new ArrayList<>();
+
+    public static String getIndentationString(int level) {
+        return String.join("", Collections.nCopies(level * INDENTATION_SIZE, " "));
     }
 
     public List<String> getQueries() {
         return Collections.unmodifiableList(m_queries);
-    }
-
-    public void setIndentation(int size) {
-        m_indentation = String.join("", Collections.nCopies(size, " "));
     }
 
     public void clear() {
@@ -30,10 +30,6 @@ public abstract class QuerySet {
         m_queries.addAll(queries);
     }
 
-    public String getIndentationString(int indentLevel) {
-        return String.join("", Collections.nCopies(indentLevel, m_indentation));
-    }
-
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
@@ -45,7 +41,4 @@ public abstract class QuerySet {
         }
         return builder.toString();
     }
-
-    private String m_indentation;
-    private List<String> m_queries = new ArrayList<>();
 }

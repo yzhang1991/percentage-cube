@@ -13,10 +13,6 @@ public class AggregationTempTable extends Table {
         setTempTable(true);
     }
 
-    public void setSelectionFlags(List<Integer> flags) {
-        m_selectionFlags = new ArrayList<>(flags);
-    }
-
     public static String getAggregationTempTableName(List<Integer> selectionFlags) {
         StringBuilder builder = new StringBuilder(TEMP_TABLE_PREFIX);
         for (int i = 0; i < selectionFlags.size(); i++) {
@@ -28,6 +24,7 @@ public class AggregationTempTable extends Table {
         return builder.toString();
     }
 
+    // Can this table be derived from some other aggregation temp table?
     public boolean canDeriveFrom(AggregationTempTable otherTable) {
         if (m_selectionFlags == null || otherTable.m_selectionFlags == null) {
             return false;

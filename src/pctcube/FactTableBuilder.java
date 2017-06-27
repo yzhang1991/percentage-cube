@@ -35,7 +35,6 @@ public class FactTableBuilder {
             paramBuilder.append(colName).append(",");
         }
         paramBuilder.setLength(paramBuilder.length() - 1);
-
         m_table.addColumn(new Column("m", DataType.FLOAT));
         paramBuilder.append(";measure=m");
         insertQueryBuilder.append("?);");
