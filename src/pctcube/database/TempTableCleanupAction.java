@@ -6,7 +6,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import pctcube.database.Database.DatabaseVisitor;
-import pctcube.database.query.DropTable;
+import pctcube.database.query.DropTableQuerySet;
 import pctcube.database.query.QuerySet;
 
 public final class TempTableCleanupAction extends QuerySet implements DatabaseVisitor {
@@ -14,7 +14,7 @@ public final class TempTableCleanupAction extends QuerySet implements DatabaseVi
     @Override
     public void visit(Database database) {
         clear();
-        DropTable dropTbl = new DropTable();
+        DropTableQuerySet dropTbl = new DropTableQuerySet();
         List<Table> tablesToRemove = new ArrayList<>();
         for (Table t : database.m_tables.values()) {
             if (t.isTempTable()) {

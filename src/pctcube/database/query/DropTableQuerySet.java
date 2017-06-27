@@ -3,7 +3,7 @@ package pctcube.database.query;
 import pctcube.database.Table;
 import pctcube.database.Table.TableVisitor;
 
-public final class DropTable extends QuerySet implements TableVisitor {
+public final class DropTableQuerySet extends QuerySet implements TableVisitor {
 
     @Override
     public void visit(Table table) {

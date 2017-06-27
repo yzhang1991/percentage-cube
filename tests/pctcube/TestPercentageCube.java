@@ -36,6 +36,7 @@ public class TestPercentageCube {
         m_database.accept(tempTableCleanupAction);
         cube.addAllQueries(tempTableCleanupAction.getQueries());
         System.out.println(cube.toString());
+        conn.executeQuerySet(tempTableCleanupAction);
     }
 
     private void verifyCubeInstantiationFails(String argument, String expectedErrorMessage) {

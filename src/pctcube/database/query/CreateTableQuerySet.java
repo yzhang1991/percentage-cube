@@ -35,7 +35,7 @@ public final class CreateTableQuerySet extends QuerySet implements TableVisitor,
     @Override
     public void visit(Table table) {
         if (m_dropIfExists) {
-            DropTable dropStmt = new DropTable();
+            DropTableQuerySet dropStmt = new DropTableQuerySet();
             dropStmt.setAddIfExistsClause(true);
             table.accept(dropStmt);
             addAllQueries(dropStmt.getQueries());

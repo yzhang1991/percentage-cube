@@ -9,6 +9,8 @@ import pctcube.database.query.QuerySet;
 
 public class DbConnection {
 
+    private static final boolean printQuery = true;
+
     private final Connection m_connection;
 
     public DbConnection(JDBCConfig config) throws ClassNotFoundException, SQLException {
@@ -20,10 +22,18 @@ public class DbConnection {
         return m_connection;
     }
 
+    public void close() throws SQLException {
+        if (m_connection != null) {
+            m_connection.close();
+        }
+    }
+
     public void executeQuerySet(QuerySet querySet) throws SQLException {
         Statement stmt = m_connection.createStatement();
         for (String query : querySet.getQueries()) {
-            System.out.println(query);
+            if (printQuery) {
+                System.out.println(query);
+            }
             stmt.execute(query);
         }
     }

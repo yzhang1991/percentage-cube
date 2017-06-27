@@ -79,7 +79,20 @@ public class PercentageCubeAssembler implements PercentageCubeVisitor {
                             queryBuilder.append(totalLevelAggTableName);
                         }
                         else {
-                            queryBuilder.append(cube.getFactTable().getTableName());
+                            // No cached aggregate result can be used, create a nested query.
+                            queryBuilder.append("(SELECT ");
+                            for (int i = 0; i < totalByKeyCount; i++) {
+                                queryBuilder.append(permutation.get(i).getColumnName()).append(", ");
+                            }
+                            queryBuilder.append("COUNT(*) AS cnt, SUM(").append(cube.getMeasure().getQuotedColumnName());
+                            queryBuilder.append(") AS ").append(cube.getMeasure().getQuotedColumnName());
+                            queryBuilder.append(" FROM ").append(cube.getFactTable().getTableName());
+                            queryBuilder.append(" GROUP BY ");
+                            for (int i = 0; i < totalByKeyCount; i++) {
+                                queryBuilder.append(permutation.get(i).getColumnName()).append(", ");
+                            }
+                            queryBuilder.setLength(queryBuilder.length() - 2);
+                            queryBuilder.append(")");
                         }
                         queryBuilder.append(" a JOIN ").append(aggIndvTableName).append(" b\n").append(cube.getIndentationString(2));
                         queryBuilder.append("ON ");
@@ -94,6 +107,10 @@ public class PercentageCubeAssembler implements PercentageCubeVisitor {
                                     queryBuilder.append(" AND ");
                                 }
                             }
+                        }
+                        if (cube.getTopK() > 0) {
+                            queryBuilder.append(" ORDER BY " ).append(cube.getMeasure().getQuotedColumnName());
+                            queryBuilder.append(" DESC LIMIT ").append(cube.getTopK());
                         }
                         queryBuilder.append(";");
                         cube.addQuery(queryBuilder.toString());
