@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.FileNotFoundException;
 import java.sql.SQLException;
 
 import org.junit.Test;
@@ -12,7 +13,6 @@ import pctcube.database.Column;
 import pctcube.database.DataType;
 import pctcube.database.Database;
 import pctcube.database.DbConnection;
-import pctcube.database.JDBCConfig;
 import pctcube.database.Table;
 import pctcube.database.TempTableCleanupAction;
 import pctcube.database.query.CreateTableQuerySet;
@@ -21,11 +21,11 @@ public class TestPercentageCube {
 
     // This test does not verify the result, need to improve
     @Test
-    public void testPercentageCube() throws ClassNotFoundException, SQLException {
+    public void testPercentageCube() throws ClassNotFoundException, SQLException, FileNotFoundException {
         CreateTableQuerySet ct = new CreateTableQuerySet();
         ct.setAddDropIfExists(true);
         m_database.accept(ct);
-        DbConnection conn = new DbConnection(new JDBCConfig());
+        DbConnection conn = new DbConnection();
         conn.executeQuerySet(ct);
 
         PercentageCube cube = new PercentageCube(m_database,

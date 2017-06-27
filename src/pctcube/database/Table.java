@@ -28,6 +28,12 @@ public class Table {
         }
     }
 
+    public void accept(TableVisitor...visitors) {
+        for (TableVisitor visitor : visitors) {
+            accept(visitor);
+        }
+    }
+
     public void accept(TableVisitor visitor) {
         visitor.visit(this);
     }

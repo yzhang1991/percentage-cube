@@ -1,6 +1,5 @@
 package pctcube.database;
 
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import pctcube.database.Database.DatabaseVisitor;
@@ -17,7 +16,7 @@ public final class TempTableCleanupAction extends QuerySet implements DatabaseVi
             if (table.isTempTable()) {
                 database.dropTable(table);
                 table.accept(dropTbl);
-                m_logger.log(Level.INFO, m_traceMessage, table.getTableName());
+//                m_logger.log(Level.INFO, m_traceMessage, table.getTableName());
             }
         }
         addAllQueries(dropTbl.getQueries());

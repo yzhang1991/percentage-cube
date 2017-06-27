@@ -1,5 +1,6 @@
 package pctcube.database;
 
+import java.io.PrintStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -9,13 +10,19 @@ import pctcube.database.query.QuerySet;
 
 public class DbConnection {
 
-    private static final boolean printQuery = true;
-
     private final Connection m_connection;
+    private Statement m_stmt;
+    private PrintStream m_sqlStream;
 
-    public DbConnection(JDBCConfig config) throws ClassNotFoundException, SQLException {
-        Class.forName(JDBCConfig.m_jdbcClassName);
+    public DbConnection() throws ClassNotFoundException, SQLException {
+        this(new Config());
+    }
+
+    public DbConnection(Config config) throws ClassNotFoundException, SQLException {
+        Class.forName(Config.m_jdbcClassName);
         m_connection = DriverManager.getConnection(config.getDatabaseURL(), config.getUserName(), config.getPassword());
+        m_stmt = m_connection.createStatement();
+        m_sqlStream = config.getSQLStream();
     }
 
     public Connection getConnection() {
@@ -29,12 +36,20 @@ public class DbConnection {
     }
 
     public void executeQuerySet(QuerySet querySet) throws SQLException {
-        Statement stmt = m_connection.createStatement();
         for (String query : querySet.getQueries()) {
-            if (printQuery) {
-                System.out.println(query);
+            if (m_sqlStream != null) {
+                m_sqlStream.println(query);
+                m_sqlStream.println();
             }
-            stmt.execute(query);
+            m_stmt.execute(query);
         }
+    }
+
+    public void execute(String query) throws SQLException {
+        if (m_sqlStream != null) {
+            m_sqlStream.println(query);
+            m_sqlStream.println();
+        }
+        m_stmt.execute(query);
     }
 }
