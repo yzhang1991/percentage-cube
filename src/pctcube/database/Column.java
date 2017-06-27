@@ -29,6 +29,28 @@ public final class Column {
         m_tableBelongedTo = copyFrom.m_tableBelongedTo;
     }
 
+    public boolean equals(Column other) {
+        if (! m_name.equals(other.m_name)) {
+            return false;
+        }
+        if (m_dataType != other.m_dataType) {
+            return false;
+        }
+        if (m_precision != other.m_precision) {
+            return false;
+        }
+        if (m_scale != other.m_scale) {
+            return false;
+        }
+        if (m_size != other.m_size) {
+            return false;
+        }
+        if (m_nullable != other.m_nullable) {
+            return false;
+        }
+        return true;
+    }
+
     public Column(String name, DataType columnType, int size) {
         m_name = name;
         m_dataType = columnType;

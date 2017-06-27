@@ -14,7 +14,6 @@ public class PercentageCubeInitializer implements PercentageCubeVisitor {
         m_args = args;
     }
 
-
     @Override
     public void visit(PercentageCube cube) {
         cube.m_database = m_database;

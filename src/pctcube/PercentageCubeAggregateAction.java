@@ -11,7 +11,6 @@ import pctcube.database.query.QuerySet;
 import pctcube.utils.CombinationGenerator;
 
 public class PercentageCubeAggregateAction implements PercentageCubeVisitor {
-
     // Evaluate all the aggregations that can be re-used during cube evaluation.
     @Override
     public void visit(PercentageCube cube) {
