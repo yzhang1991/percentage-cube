@@ -29,6 +29,22 @@ public final class PercentageCube extends QuerySet {
         accept(new PercentageCubeAssembler());
     }
 
+    public void evaluateIncrementallyOn(Table deltaFactTable) {
+        for (Column dimension : m_dimensions) {
+            if (! deltaFactTable.getColumnByName(dimension.getColumnName()).equals(dimension)) {
+                throw new IllegalArgumentException("Invalid delta fact table.");
+            }
+        }
+
+        clear();
+        accept(new PercentageCubeCreateAction());
+        if (m_evaluationMethod == EvaluationMethod.GROUPBY) {
+            accept(new PercentageCubeAggregateAction(deltaFactTable));
+            accept(new PercentageCubeDeltaMergeAction());
+        }
+        accept(new PercentageCubeAssembler());
+    }
+
     public PercentageCube(Database db, String[] args) {
         accept(new PercentageCubeInitializer(db, args));
     }

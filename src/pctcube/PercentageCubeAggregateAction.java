@@ -11,9 +11,23 @@ import pctcube.database.query.QuerySet;
 import pctcube.utils.CombinationGenerator;
 
 public class PercentageCubeAggregateAction implements PercentageCubeVisitor {
+
+    private Table m_deltaFactTable = null;
+    private String m_globalTempTableNamePrefix = "";
+
+    public PercentageCubeAggregateAction() {
+
+    }
+
+    public PercentageCubeAggregateAction(Table deltaFactTable) {
+        m_deltaFactTable = deltaFactTable;
+        m_globalTempTableNamePrefix = DELTA;
+    }
+
     // Evaluate all the aggregations that can be re-used during cube evaluation.
     @Override
     public void visit(PercentageCube cube) {
+        Table factTable = m_deltaFactTable == null ? cube.getFactTable() : m_deltaFactTable;
         StringBuilder aggregationQueryBuilder = new StringBuilder();
         CreateTableQuerySet createTableQuerySet = new CreateTableQuerySet();
         createTableQuerySet.setAddDropIfExists(true);
@@ -37,6 +51,7 @@ public class PercentageCubeAggregateAction implements PercentageCubeVisitor {
                 // AggregationTempTable is a sub-class of Table, it can generate the name using the selected
                 // dimension column indices so that later cube generation queries can easily find the use them.
                 AggregationTempTable tempAggTable = new AggregationTempTable(dimensionSelector.getCurrentSelectionFlags());
+                tempAggTable.setTableName(m_globalTempTableNamePrefix + tempAggTable.getTableName());
                 for (Column dimension : selectedDimensions) {
                     // Note that we make a copy of the dimension column object using the deep copy constructor.
                     // Because the columns are associated with the table they are added to, we do not want to mess with
@@ -77,6 +92,9 @@ public class PercentageCubeAggregateAction implements PercentageCubeVisitor {
                         if (! (existingAggResult instanceof AggregationTempTable)) {
                             continue;
                         }
+                        if (! existingAggResult.getTableName().startsWith(m_globalTempTableNamePrefix)) {
+                            continue;
+                        }
                         if (tempAggTable.canDeriveFrom((AggregationTempTable)existingAggResult)) {
                             aggregationQueryBuilder.append(existingAggResult.getTableName());
                             break;
@@ -87,7 +105,7 @@ public class PercentageCubeAggregateAction implements PercentageCubeVisitor {
                     // If this is the aggregation at the finest level, i.e.,
                     // it is using all the dimension columns as GROUP-BY columns,
                     // it can only be computed from the fact table.
-                    aggregationQueryBuilder.append(cube.getFactTable().getTableName());
+                    aggregationQueryBuilder.append(factTable.getTableName());
                 }
                 aggregationQueryBuilder.append("\n").append(QuerySet.getIndentationString(1));
                 aggregationQueryBuilder.append("GROUP BY ");
@@ -110,7 +128,7 @@ public class PercentageCubeAggregateAction implements PercentageCubeVisitor {
         // TEMP_AGG_0 is one of the closest aggregation results this global count query can reuse.
 
         // Create the table:
-        Table globalAggTable = new Table(TEMP_AGG_COUNT);
+        Table globalAggTable = new Table(m_globalTempTableNamePrefix + TEMP_AGG_COUNT);
         globalAggTable.setTempTable(true);
         globalAggTable.addColumn(new Column("cnt", DataType.INTEGER));
         globalAggTable.addColumn(new Column(cube.getMeasure()));
@@ -124,12 +142,15 @@ public class PercentageCubeAggregateAction implements PercentageCubeVisitor {
         aggregationQueryBuilder.append("SELECT COUNT(*), ");
         aggregationQueryBuilder.append("SUM(").append(cube.getMeasure().getQuotedColumnName());
         aggregationQueryBuilder.append(")\n").append(QuerySet.getIndentationString(1));
-        aggregationQueryBuilder.append("FROM TEMP_AGG_0;");
+        aggregationQueryBuilder.append("FROM ");
+        aggregationQueryBuilder.append(m_globalTempTableNamePrefix);
+        aggregationQueryBuilder.append("TEMP_AGG_0;");
 
         cube.getDatabase().addTable(globalAggTable);
         cube.addAllQueries(createTableQuerySet.getQueries());
         cube.addQuery(aggregationQueryBuilder.toString());
     }
 
+    protected static final String DELTA = "DELTA_";
     protected static final String TEMP_AGG_COUNT = "TEMP_AGG_COUNT";
 }
