@@ -13,7 +13,7 @@ import pctcube.database.Table;
 
 public class FactTableBuilder {
 
-    private static final int MAX_GROUP_PER_DIMENSION = 5;
+    private static final int MAX_GROUP_PER_DIMENSION = 10;
 
     private Table m_table;
     private String m_insertQuery;
