@@ -14,9 +14,9 @@ import pctcube.database.query.CreateTableQuerySet;
 
 public class jPctCubeExperiment {
 
-    private static final String FACT_TABLE_ORIGINAL = "factTableOriginal";
-    private static final String FACT_TABLE_DELTA = "factTableDelta";
-    private static final String FACT_TABLE_FINAL = "factTableFinal";
+    private static final String FACT_TABLE_ORIGINAL = "factTableOriginal_d";
+    private static final String FACT_TABLE_DELTA = "factTableDelta_d";
+    private static final String FACT_TABLE_FINAL = "factTableFinal_d";
     private static final String HORIZONTAL_RULE =
             "------------------------------------------------------------";
 
@@ -53,9 +53,9 @@ public class jPctCubeExperiment {
     public jPctCubeExperiment(Config config, int dimensionCount) throws ClassNotFoundException, SQLException, FileNotFoundException {
         m_dimensionCount = dimensionCount;
         // Build the fact tables.
-        m_factTableOriginalBuilder = new FactTableBuilder(FACT_TABLE_ORIGINAL, m_dimensionCount);
-        m_factTableDeltaBuilder = new FactTableBuilder(FACT_TABLE_DELTA, m_dimensionCount);
-        m_factTableFinalBuilder = new FactTableBuilder(FACT_TABLE_FINAL, m_dimensionCount);
+        m_factTableOriginalBuilder = new FactTableBuilder(FACT_TABLE_ORIGINAL + m_dimensionCount, m_dimensionCount);
+        m_factTableDeltaBuilder = new FactTableBuilder(FACT_TABLE_DELTA + m_dimensionCount, m_dimensionCount);
+        m_factTableFinalBuilder = new FactTableBuilder(FACT_TABLE_FINAL + m_dimensionCount, m_dimensionCount);
         m_factTableOriginal = m_factTableOriginalBuilder.getTable();
         m_factTableDelta = m_factTableDeltaBuilder.getTable();
         m_factTableFinal = m_factTableFinalBuilder.getTable();
