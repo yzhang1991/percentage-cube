@@ -82,7 +82,9 @@ public class jPctCubeExperiment {
     }
 
     public String run() throws ClassNotFoundException, SQLException {
-        generateData();
+        if (m_config.needToGenerateData()) {
+            generateData();
+        }
         double originalTime = runOriginal();
         // Do not clean up here, results need to be reused.
         double incrTime = runIncremental();

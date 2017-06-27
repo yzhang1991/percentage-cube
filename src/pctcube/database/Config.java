@@ -25,6 +25,11 @@ public class Config {
     private double m_deltaRatio = 0.2;
     private int m_dStart = 2;
     private int m_dEnd = 5;
+    private boolean m_datagen = true;
+
+    public boolean needToGenerateData() {
+        return m_datagen;
+    }
 
     public int getDStart() {
         return m_dStart;
@@ -119,6 +124,14 @@ public class Config {
                         break;
                     case "dend":
                         config.m_dEnd = Integer.parseInt(seg[1].trim());
+                        break;
+                    case "datagen":
+                        if (seg[1].trim().equals("true")) {
+                            config.m_datagen = true;
+                        }
+                        else {
+                            config.m_datagen = false;
+                        }
                         break;
                     }
                 }
