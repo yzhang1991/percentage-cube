@@ -41,7 +41,7 @@ public class PercentageCubeAssembler implements PercentageCubeVisitor {
                     // This is because at least one dimension needs to be selected as the break-down-by key.
                     for (int totalByKeyCount = 0; totalByKeyCount < selection.size(); totalByKeyCount++) {
                         queryBuilder.setLength(0);
-                        queryBuilder.append("INSERT INTO ").append(cube.getTargetTable().getTableName());
+                        queryBuilder.append("INSERT INTO ").append(cube.getPercentageCubeTable().getTableName());
                         queryBuilder.append("\n").append(QuerySet.getIndentationString(1));
                         queryBuilder.append("SELECT '");
 

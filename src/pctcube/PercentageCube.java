@@ -82,8 +82,8 @@ public final class PercentageCube extends QuerySet {
         return m_database;
     }
 
-    public Table getTargetTable() {
-        return m_targetTable;
+    public Table getPercentageCubeTable() {
+        return m_pctCubeTable;
     }
 
     public Table getTopKTargetTable() {
@@ -94,11 +94,17 @@ public final class PercentageCube extends QuerySet {
         return m_topKTempTable;
     }
 
+    public Table getOLAPCubeTable() {
+        return m_olapCubeTable;
+    }
+
     protected Database m_database;
     protected Table m_factTable;
     protected Table m_topKTargetTable;
     protected Table m_topKTempTable;
-    protected Table m_targetTable;
+    protected Table m_pctCubeTable;
+    protected Table m_olapCubeTable;
+
     protected List<Column> m_dimensions = new ArrayList<>();
     protected Column m_measure;
     protected PruningStrategy m_pruningStrategy = PruningStrategy.NONE;
