@@ -7,7 +7,7 @@ import pctcube.database.Table;
 public class PercentageCubeTableFactory {
 
     public static Table getTable(PercentageCube cube) {
-        Table retval = new Table("pct");
+        Table retval = new Table("pct_cube");
         retval.addColumn(new Column("total by", DataType.VARCHAR).setNullable(false));
         retval.addColumn(new Column("break down by", DataType.VARCHAR).setNullable(false));
         for (Column dimension : cube.getDimensions()) {
