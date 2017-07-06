@@ -11,7 +11,7 @@ import pctcube.database.query.QuerySet;
 public class DbConnection {
 
     private final Connection m_connection;
-    private Statement m_stmt;
+    private Statement m_stmt = null;
     private PrintStream m_sqlStream;
 
     public DbConnection() throws ClassNotFoundException, SQLException {
@@ -19,9 +19,14 @@ public class DbConnection {
     }
 
     public DbConnection(Config config) throws ClassNotFoundException, SQLException {
-        Class.forName(Config.m_jdbcClassName);
-        m_connection = DriverManager.getConnection(config.getDatabaseURL(), config.getUserName(), config.getPassword());
-        m_stmt = m_connection.createStatement();
+        if (! config.isOffline()) {
+            Class.forName(Config.m_jdbcClassName);
+            m_connection = DriverManager.getConnection(config.getDatabaseURL(), config.getUserName(), config.getPassword());
+            m_stmt = m_connection.createStatement();
+        }
+        else {
+            m_connection = null;
+        }
         m_sqlStream = config.getSQLStream();
     }
 
@@ -41,7 +46,9 @@ public class DbConnection {
                 m_sqlStream.println(query);
                 m_sqlStream.println();
             }
-            m_stmt.execute(query);
+            if (m_stmt != null) {
+                m_stmt.execute(query);
+            }
         }
     }
 
@@ -50,6 +57,8 @@ public class DbConnection {
             m_sqlStream.println(query);
             m_sqlStream.println();
         }
-        m_stmt.execute(query);
+        if (m_stmt != null) {
+            m_stmt.execute(query);
+        }
     }
 }

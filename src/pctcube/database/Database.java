@@ -31,6 +31,10 @@ public final class Database {
         m_tables.put(table.getTableName(), table);
     }
 
+    public void addOrReplaceTable(Table table) {
+        m_tables.put(table.getTableName(), table);
+    }
+
     public void dropTable(Table table) {
         m_tables.remove(table.getTableName());
     }

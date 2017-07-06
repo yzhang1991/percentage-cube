@@ -86,12 +86,18 @@ public final class PercentageCube extends QuerySet {
         return m_targetTable;
     }
 
-    protected void setTargetTable(Table targetTable) {
-        m_targetTable = targetTable;
+    public Table getTopKTargetTable() {
+        return m_topKTargetTable;
+    }
+
+    public Table getTopKTempTable() {
+        return m_topKTempTable;
     }
 
     protected Database m_database;
     protected Table m_factTable;
+    protected Table m_topKTargetTable;
+    protected Table m_topKTempTable;
     protected Table m_targetTable;
     protected List<Column> m_dimensions = new ArrayList<>();
     protected Column m_measure;

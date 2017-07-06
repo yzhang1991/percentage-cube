@@ -51,6 +51,9 @@ public class FactTableBuilder {
     }
 
     public void populateData(int rowCount, DbConnection conn) throws SQLException {
+        if (conn.getConnection() == null) {
+            return;
+        }
         Random rand = new Random();
         List<Column> columns = m_table.getColumns();
         int[] groupCounts = new int[m_table.getColumns().size() - 1];

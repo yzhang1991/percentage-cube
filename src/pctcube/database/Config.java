@@ -26,6 +26,7 @@ public class Config {
     private int m_dStart = 2;
     private int m_dEnd = 5;
     private boolean m_datagen = true;
+    private boolean m_offline = false;
 
     public boolean needToGenerateData() {
         return m_datagen;
@@ -73,6 +74,10 @@ public class Config {
 
     public String getDatabaseName() {
         return m_database;
+    }
+
+    public boolean isOffline() {
+        return m_offline;
     }
 
     public static Config getConfigFromFile(String filePath) {
@@ -131,6 +136,14 @@ public class Config {
                         }
                         else {
                             config.m_datagen = false;
+                        }
+                        break;
+                    case "offline":
+                        if (seg[1].trim().equals("true")) {
+                            config.m_offline = true;
+                        }
+                        else {
+                            config.m_offline = false;
                         }
                         break;
                     }
