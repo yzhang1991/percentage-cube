@@ -36,6 +36,7 @@ public class PercentageCubeAggregateAction implements PercentageCubeVisitor {
             cube.m_olapCubeTable = olapCubeTable;
         }
         olapCubeTable.accept(createTableQuerySet);
+        cube.getDatabase().addOrReplaceTable(olapCubeTable);
 
         StringBuilder dimensionList = new StringBuilder();
         for (Column dimension : cube.getDimensions()) {

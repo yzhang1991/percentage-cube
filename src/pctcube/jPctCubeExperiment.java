@@ -9,7 +9,6 @@ import pctcube.database.Config;
 import pctcube.database.Database;
 import pctcube.database.DbConnection;
 import pctcube.database.Table;
-import pctcube.database.TempTableCleanupAction;
 import pctcube.database.query.CreateTableQuerySet;
 
 public class jPctCubeExperiment {
@@ -86,13 +85,9 @@ public class jPctCubeExperiment {
             generateData();
         }
         double originalTime = runOriginal();
-        // Do not clean up here, results need to be reused.
-        double incrTime = runIncremental();
-        cleanup();
-        double finalTime = runFinal();
-        cleanup();
         double topKTime = runWithTopK();
-        cleanup();
+        double incrTime = runIncremental();
+        double finalTime = runFinal();
         String retData = String.format("%8d%8d%10.2f%10.2f%10.2f%10.2f",
                 m_config.getDataSize(), m_dimensionCount, originalTime, incrTime, finalTime, topKTime);
         printHeader(this.getClass().getSimpleName());
@@ -156,13 +151,6 @@ public class jPctCubeExperiment {
         double duration = (endTime - startTime) / 1000.0;
         printLog("Finished in %.2f seconds.", duration);
         return duration;
-    }
-
-    private void cleanup() throws SQLException {
-        printLog("Cleanup the temp tables.");
-        TempTableCleanupAction cleaner = new TempTableCleanupAction();
-        m_database.accept(cleaner);
-        m_connection.executeQuerySet(cleaner);
     }
 
     private void generateData() throws SQLException, ClassNotFoundException {

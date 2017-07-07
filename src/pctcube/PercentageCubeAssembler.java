@@ -147,45 +147,12 @@ public class PercentageCubeAssembler implements PercentageCubeVisitor {
                                 }
                             }
                         }
+                        if (cube.getTopK() > 0) {
+                            queryBuilder.append("\n").append(QuerySet.getIndentationString(1));
+                            queryBuilder.append("ORDER BY ").append(measureName);
+                            queryBuilder.append(" DESC LIMIT ").append(cube.getTopK());
+                        }
                         queryBuilder.append(";");
-
-//
-//
-//                        for (int i = 0; i < totalByKeyCount; i++) {
-//                            String columnName = permutation.get(i).getQuotedColumnName();
-//                            queryBuilder.append(columnName).append(",");
-//                            totalByIsNullCondition.append(columnName).append(" IS %sNULL AND ");
-//                        }
-//                        if (totalByKeyCount > 0) {
-//                            queryBuilder.setLength(queryBuilder.length() - 1);
-//                        }
-//
-//
-//
-//                        for (int i = totalByKeyCount; i < permutation.size(); i++) {
-//                            String columnName = permutation.get(i).getQuotedColumnName();
-//                            queryBuilder.append(columnName).append(",");
-//                            breakdownByIsNullCondition.append(columnName).append(" IS %sNULL AND ");
-//                        }
-//                        breakdownByIsNullCondition.setLength(breakdownByIsNullCondition.length() - 5);
-//                        queryBuilder.setLength(queryBuilder.length() - 1);
-//
-//
-//
-//                        //
-//                        queryBuilder.append(dimensionValues.toString());
-//
-//
-//                        queryBuilder.append("(SELECT * FROM ").append(cube.getOLAPCubeTable().getTableName());
-//                        queryBuilder.append(" WHERE ").append(unselectedDimensionIsNull.toString());
-//                        queryBuilder.append(totalByIsNullCondition.toString().replaceAll("%s", "NOT "));
-//                        queryBuilder.append(breakdownByIsNullCondition.toString().replaceAll("%s", ""));
-//                        queryBuilder.append(") a JOIN\n").append(QuerySet.getIndentationString(1));
-//                        queryBuilder.append("(SELECT * FROM ").append(cube.getOLAPCubeTable().getTableName());
-//                        queryBuilder.append(" WHERE ").append(unselectedDimensionIsNull.toString());
-//                        queryBuilder.append(totalByIsNullCondition.toString().replaceAll("%s", "NOT "));
-//                        queryBuilder.append(breakdownByIsNullCondition.toString().replaceAll("%s", "NOT "));
-//                        queryBuilder.append(";");
                         cube.addQuery(queryBuilder.toString());
                     }
                 }
