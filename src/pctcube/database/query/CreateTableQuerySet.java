@@ -56,8 +56,9 @@ public final class CreateTableQuerySet extends QuerySet implements TableVisitor,
         addQuery(builder.toString());
     }
 
-    public void setAddDropIfExists(boolean value) {
+    public CreateTableQuerySet setAddDropIfExists(boolean value) {
         m_dropIfExists = value;
+        return this;
     }
 
     private boolean m_dropIfExists = false;

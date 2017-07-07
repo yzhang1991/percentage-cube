@@ -147,11 +147,6 @@ public class PercentageCubeAssembler implements PercentageCubeVisitor {
                                 }
                             }
                         }
-                        if (cube.getTopK() > 0) {
-                            queryBuilder.append("\n").append(QuerySet.getIndentationString(1));
-                            queryBuilder.append("ORDER BY ").append(measureName);
-                            queryBuilder.append(" DESC LIMIT ").append(cube.getTopK());
-                        }
                         queryBuilder.append(";");
                         cube.addQuery(queryBuilder.toString());
                     }

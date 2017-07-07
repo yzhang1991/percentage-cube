@@ -27,6 +27,7 @@ public final class PercentageCube extends QuerySet {
             accept(new PercentageCubeAggregateAction());
         }
         accept(new PercentageCubeAssembler());
+        accept(new PercentageCubeTopKFilter());
     }
 
     public void evaluateIncrementallyOn(Table deltaFactTable) {
@@ -43,6 +44,7 @@ public final class PercentageCube extends QuerySet {
             accept(new PercentageCubeDeltaMergeAction());
         }
         accept(new PercentageCubeAssembler());
+        accept(new PercentageCubeTopKFilter());
     }
 
     public PercentageCube(Database db, String[] args) {

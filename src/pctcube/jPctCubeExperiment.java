@@ -76,7 +76,7 @@ public class jPctCubeExperiment {
     private static void printHeader(String className) {
         printLogStatic(className, HORIZONTAL_RULE);
         printLogStatic(className, "%8s%8s%10s%10s%10s%10s",
-                "n", "d", "original", "delta", "holistic", "top-k=2");
+                "n", "d", "original", "top-k=2", "delta", "full");
         printLogStatic(className, HORIZONTAL_RULE);
     }
 
@@ -89,7 +89,8 @@ public class jPctCubeExperiment {
         double incrTime = runIncremental();
         double finalTime = runFinal();
         String retData = String.format("%8d%8d%10.2f%10.2f%10.2f%10.2f",
-                m_config.getDataSize(), m_dimensionCount, originalTime, incrTime, finalTime, topKTime);
+                m_config.getDataSize(), m_dimensionCount,
+                originalTime, topKTime - originalTime, incrTime, finalTime);
         printHeader(this.getClass().getSimpleName());
         printLog(retData);
         printLog(HORIZONTAL_RULE);
@@ -162,6 +163,10 @@ public class jPctCubeExperiment {
         m_factTableOriginal.accept(createTableQuerySet);
         m_factTableDelta.accept(createTableQuerySet);
         m_factTableFinal.accept(createTableQuerySet);
+
+        createTableQuerySet.addQuery(m_factTableOriginalBuilder.getProjectionDDL());
+        createTableQuerySet.addQuery(m_factTableDeltaBuilder.getProjectionDDL());
+        createTableQuerySet.addQuery(m_factTableFinalBuilder.getProjectionDDL());
 
         m_connection.executeQuerySet(createTableQuerySet);
 

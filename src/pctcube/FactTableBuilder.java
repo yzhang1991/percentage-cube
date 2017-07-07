@@ -3,6 +3,7 @@ package pctcube;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -18,6 +19,7 @@ public class FactTableBuilder {
     private Table m_table;
     private String m_insertQuery;
     private String m_cubeParameter;
+    private String m_projectionDDL;
 
     public FactTableBuilder(String name, int dimensionCount) {
         if (dimensionCount <= 0) {
@@ -26,20 +28,27 @@ public class FactTableBuilder {
         m_table = new Table(name);
         StringBuilder insertQueryBuilder = new StringBuilder("INSERT INTO ");
         StringBuilder paramBuilder = new StringBuilder("table=");
+        StringBuilder projectionQueryBuilder = new StringBuilder("CREATE PROJECTION ");
+        List<String> columnNames = new ArrayList<>();
         paramBuilder.append(name).append(";dimensions=");
         insertQueryBuilder.append(name).append(" VALUES (");
+        projectionQueryBuilder.append(name).append("_proj AS (SELECT * FROM ");
+        projectionQueryBuilder.append(name).append(" ORDER BY ");
         for (int i = 0; i < dimensionCount; i++) {
             String colName = "d" + i;
             m_table.addColumn(new Column(colName, DataType.VARCHAR));
+            columnNames.add(colName);
             insertQueryBuilder.append("?,");
-            paramBuilder.append(colName).append(",");
         }
-        paramBuilder.setLength(paramBuilder.length() - 1);
+        paramBuilder.append(String.join(",", columnNames));
+        projectionQueryBuilder.append(String.join(", ", columnNames));
+        projectionQueryBuilder.append(");");
         m_table.addColumn(new Column("m", DataType.FLOAT));
         paramBuilder.append(";measure=m");
         insertQueryBuilder.append("?);");
         m_insertQuery = insertQueryBuilder.toString();
         m_cubeParameter = paramBuilder.toString();
+        m_projectionDDL = projectionQueryBuilder.toString();
     }
 
     public Table getTable() {
@@ -48,6 +57,10 @@ public class FactTableBuilder {
 
     public String getCubeParameter() {
         return m_cubeParameter;
+    }
+
+    public String getProjectionDDL() {
+        return m_projectionDDL;
     }
 
     public void populateData(int rowCount, DbConnection conn) throws SQLException {

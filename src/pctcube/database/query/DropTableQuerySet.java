@@ -12,7 +12,7 @@ public final class DropTableQuerySet extends QuerySet implements TableVisitor {
             builder.append("IF EXISTS ");
         }
         builder.append(table.getTableName());
-        builder.append(";");
+        builder.append(" CASCADE;");
         addQuery(builder.toString());
     }
 
