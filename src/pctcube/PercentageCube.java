@@ -86,22 +86,12 @@ public final class PercentageCube extends QuerySet {
         return m_pctCubeTable;
     }
 
-    public Table getTopKTargetTable() {
-        return m_topKTargetTable;
-    }
-
-    public Table getTopKTempTable() {
-        return m_topKTempTable;
-    }
-
     public Table getOLAPCubeTable() {
         return m_olapCubeTable;
     }
 
     protected Database m_database;
     protected Table m_factTable;
-    protected Table m_topKTargetTable;
-    protected Table m_topKTempTable;
     protected Table m_pctCubeTable;
     protected Table m_olapCubeTable;
 
