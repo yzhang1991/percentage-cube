@@ -108,6 +108,7 @@ public class jPctCubeExperiment {
         long endTime = System.currentTimeMillis();
         double duration = (endTime - startTime) / 1000.0;
         printLog("Finished in %.2f seconds.", duration);
+        m_connection.execute("SELECT CLEAR_CACHES();");
         return duration;
     }
 
@@ -122,6 +123,7 @@ public class jPctCubeExperiment {
         long endTime = System.currentTimeMillis();
         double duration = (endTime - startTime) / 1000.0;
         printLog("Finished in %.2f seconds.", duration);
+        m_connection.execute("SELECT CLEAR_CACHES();");
         return duration;
     }
 
@@ -137,6 +139,7 @@ public class jPctCubeExperiment {
         long endTime = System.currentTimeMillis();
         double duration = (endTime - startTime) / 1000.0;
         printLog("Finished in %.2f seconds.", duration);
+        m_connection.execute("SELECT CLEAR_CACHES();");
         return duration;
     }
 
@@ -151,6 +154,7 @@ public class jPctCubeExperiment {
         long endTime = System.currentTimeMillis();
         double duration = (endTime - startTime) / 1000.0;
         printLog("Finished in %.2f seconds.", duration);
+        m_connection.execute("SELECT CLEAR_CACHES();");
         return duration;
     }
 
