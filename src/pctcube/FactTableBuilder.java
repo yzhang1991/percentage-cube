@@ -63,15 +63,20 @@ public class FactTableBuilder {
         return m_projectionDDL;
     }
 
-    public void populateData(int rowCount, DbConnection conn) throws SQLException {
+    public void populateData(int rowCount,
+                             int nullIn100,
+                             int cardinality,
+                             DbConnection conn) throws SQLException {
         if (conn.getConnection() == null) {
             return;
         }
         Random rand = new Random();
         List<Column> columns = m_table.getColumns();
-        int[] groupCounts = new int[m_table.getColumns().size() - 1];
+        int[] cardinalities = new int[m_table.getColumns().size() - 1];
         for (int i = 0; i < columns.size() - 1; i++) {
-            groupCounts[i] = rand.nextInt(MAX_GROUP_PER_DIMENSION) + 1;
+            cardinalities[i] = cardinality == 0 ?
+                               rand.nextInt(MAX_GROUP_PER_DIMENSION) + 1 :
+                               cardinality;
         }
         PreparedStatement insertStmt = conn.getConnection().prepareStatement(m_insertQuery);
         Statement stmt = conn.getConnection().createStatement();
@@ -79,12 +84,15 @@ public class FactTableBuilder {
         for (int i = 0; i < rowCount; i++) {
             for (int j = 0; j < columns.size() - 1; j++) {
                 insertStmt.setString(j + 1, // index start from 1
-                        String.format("d%d_group%d", j, rand.nextInt(groupCounts[j])));
+                        rand.nextInt(100) > nullIn100 ?
+                                String.format("d%d_group%d", j, rand.nextInt(cardinalities[j])) :
+                                null
+                        );
             }
             insertStmt.setFloat(columns.size(), rand.nextInt(100));
             insertStmt.addBatch();
             insertStmt.clearParameters();
-            if (i % 200 == 0) {
+            if (i % 1000 == 0) {
                 insertStmt.executeBatch();
             }
         }

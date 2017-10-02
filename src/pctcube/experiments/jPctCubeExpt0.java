@@ -1,21 +1,24 @@
-package pctcube;
+package pctcube.experiments;
 
 import java.io.FileNotFoundException;
 import java.sql.SQLException;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
+import pctcube.FactTableBuilder;
+import pctcube.PercentageCube;
 import pctcube.database.Config;
 import pctcube.database.Database;
 import pctcube.database.DbConnection;
 import pctcube.database.Table;
 import pctcube.database.query.CreateTableQuerySet;
 
-public class jPctCubeExperiment {
+// Original experiment
+public class jPctCubeExpt0 {
 
-    private static final String FACT_TABLE_ORIGINAL = "factTableOriginal_d";
-    private static final String FACT_TABLE_DELTA = "factTableDelta_d";
-    private static final String FACT_TABLE_FINAL = "factTableFinal_d";
+    private static final String FACT_TABLE_ORIGINAL = "FT_Original_d";
+    private static final String FACT_TABLE_DELTA = "FT_Delta_d";
+    private static final String FACT_TABLE_FINAL = "FT_Final_d";
     private static final String HORIZONTAL_RULE =
             "------------------------------------------------------------";
 
@@ -24,7 +27,7 @@ public class jPctCubeExperiment {
         Config config = Config.getConfigFromFile("config.ini");
         for (int dimensionCount = config.getDStart();
                 dimensionCount <= config.getDEnd(); dimensionCount++) {
-            jPctCubeExperiment experiment = new jPctCubeExperiment(config, dimensionCount);
+            jPctCubeExpt0 experiment = new jPctCubeExpt0(config, dimensionCount);
             fullStatsBuilder.append(experiment.run()).append("\n");
         }
         if (fullStatsBuilder.length() > 0) {
@@ -49,7 +52,7 @@ public class jPctCubeExperiment {
     private Config m_config;
     private DbConnection m_connection;
 
-    public jPctCubeExperiment(Config config, int dimensionCount) throws ClassNotFoundException, SQLException, FileNotFoundException {
+    public jPctCubeExpt0(Config config, int dimensionCount) throws ClassNotFoundException, SQLException, FileNotFoundException {
         m_dimensionCount = dimensionCount;
         // Build the fact tables.
         m_factTableOriginalBuilder = new FactTableBuilder(FACT_TABLE_ORIGINAL + m_dimensionCount, m_dimensionCount);
@@ -174,8 +177,8 @@ public class jPctCubeExperiment {
 
         m_connection.executeQuerySet(createTableQuerySet);
 
-        m_factTableOriginalBuilder.populateData(m_config.getDataSize(), m_connection);
-        m_factTableDeltaBuilder.populateData(m_config.getDeltaDataSize(), m_connection);
+        m_factTableOriginalBuilder.populateData(m_config.getDataSize(), 0, 0, m_connection);
+        m_factTableDeltaBuilder.populateData(m_config.getDeltaDataSize(), 0, 0, m_connection);
         String populateFinalFactTableQueryTemplate =
                 "INSERT INTO %s SELECT * FROM %s;";
         m_connection.execute(String.format(populateFinalFactTableQueryTemplate,

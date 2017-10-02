@@ -2,6 +2,7 @@ jarName="pctcube.jar"
 
 clean() {
     rm  src/pctcube/*.class \
+        src/pctcube/experiments/*.class \
         src/pctcube/database/*.class \
         src/pctcube/database/query/*.class \
         src/pctcube/utils/*.class 2>/dev/null
@@ -10,6 +11,7 @@ clean() {
 
 jars() {
     javac src/pctcube/*.java \
+          src/pctcube/experiments/*.java \
           src/pctcube/database/*.java \
           src/pctcube/database/query/*.java \
           src/pctcube/utils/*.java
@@ -24,7 +26,7 @@ jars-ifneeded() {
 
 start() {
     jars-ifneeded
-    java -classpath $jarName:./third-party/* pctcube.jPctCubeExperiment
+    java -classpath $jarName:./third-party/* pctcube.experiments.jPctCubeExpt2
 }
 
 if [ $# -eq 0 ]; then

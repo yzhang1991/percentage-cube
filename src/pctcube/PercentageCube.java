@@ -76,6 +76,10 @@ public final class PercentageCube extends QuerySet {
         return m_topk;
     }
 
+    public int getRowCountThreshold() {
+        return m_rowCount;
+    }
+
     public boolean isIncremental() {
         return m_incremental;
     }
@@ -102,6 +106,7 @@ public final class PercentageCube extends QuerySet {
     protected PruningStrategy m_pruningStrategy = PruningStrategy.NONE;
     protected EvaluationMethod m_evaluationMethod = EvaluationMethod.GROUPBY;
     protected int m_topk = 0;
+    protected int m_rowCount = 0; // row count, zero means no threshold applied.
     protected boolean m_incremental = false;
 
     protected static final Logger m_logger = Logger.getLogger(PercentageCube.class.getName());

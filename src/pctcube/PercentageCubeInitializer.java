@@ -90,6 +90,17 @@ public class PercentageCubeInitializer implements PercentageCubeVisitor {
             }
         }
 
+        // row count threshold
+        String rowcount = parser.getArgumentValue("rowcount");
+        if (rowcount != null) {
+            try {
+                cube.m_rowCount = Integer.valueOf(rowcount);
+            }
+            catch (NumberFormatException e) {
+                Errors.INVALID_PERCENTAGE_CUBE_ARGS.throwIt(PercentageCube.m_logger, "rowcount");
+            }
+        }
+
         // incremental
         cube.m_incremental = Boolean.valueOf(parser.getArgumentValue("incremental"));
     }

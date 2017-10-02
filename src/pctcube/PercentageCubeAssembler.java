@@ -104,7 +104,12 @@ public class PercentageCubeAssembler implements PercentageCubeVisitor {
                         }
                         queryBuilder.append("cnt, ").append(measureName);
                         queryBuilder.append(" FROM ").append(cube.getOLAPCubeTable().getTableName());
-                        queryBuilder.append(" WHERE ").append(String.join(" IS NULL AND ", unselectedDimensionNames));
+                        queryBuilder.append(" WHERE ");
+                        if (cube.getRowCountThreshold() > 0) {
+                            queryBuilder.append("cnt > ").append(cube.getRowCountThreshold());
+                            queryBuilder.append(" AND ");
+                        }
+                        queryBuilder.append(String.join(" IS NULL AND ", unselectedDimensionNames));
                         if (unselectedDimensionNames.size() > 0) {
                             queryBuilder.append(" IS NULL AND ");
                         }
@@ -124,7 +129,12 @@ public class PercentageCubeAssembler implements PercentageCubeVisitor {
                         queryBuilder.append(String.join(", ", breakdownByColumnNames));
                         queryBuilder.append(", cnt, ").append(measureName);
                         queryBuilder.append(" FROM ").append(cube.getOLAPCubeTable().getTableName());
-                        queryBuilder.append(" WHERE ").append(String.join(" IS NULL AND ", unselectedDimensionNames));
+                        queryBuilder.append(" WHERE ");
+                        if (cube.getRowCountThreshold() > 0) {
+                            queryBuilder.append("cnt > ").append(cube.getRowCountThreshold());
+                            queryBuilder.append(" AND ");
+                        }
+                        queryBuilder.append(String.join(" IS NULL AND ", unselectedDimensionNames));
                         if (unselectedDimensionNames.size() > 0) {
                             queryBuilder.append(" IS NULL AND ");
                         }
