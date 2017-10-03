@@ -10,8 +10,8 @@ class SumWithNull : public AggregateFunction
     virtual void initAggregate(ServerInterface &srvInterface, 
                                IntermediateAggs &aggs) {
         try {
-            VNumeric &sum = aggs.getNumericRef(0);
-            sum.setZero();
+            vfloat &sum = aggs.getFloatRef(0);
+            sum = 0;
         } catch (std::exception &e) {
             // Standard exception. Quit.
             vt_report_error(0, "Exception while initializing intermediate aggregates: [%s]", e.what());
@@ -23,17 +23,17 @@ class SumWithNull : public AggregateFunction
                    IntermediateAggs &aggs)
     {
         try {
-            VNumeric &sum = aggs.getNumericRef(0);
-            if (sum.isNull()) {
+            vfloat &sum = aggs.getFloatRef(0);
+            if (vfloatIsNull(sum)) {
                 return;
             }
             do {
-                const VNumeric &input = argReader.getNumericRef(0);
-                if (input.isNull()) {
-                    sum.setNull();
+                const vfloat &input = argReader.getFloatRef(0);
+                if (vfloatIsNull(input)) {
+                    sum = vfloat_null;
                     return;
                 }
-                sum.accumulate(&input);
+                sum += input;
             } while (argReader.next());
         } catch (std::exception &e) {
             // Standard exception. Quit.
@@ -46,21 +46,21 @@ class SumWithNull : public AggregateFunction
                          MultipleIntermediateAggs &aggsOther)
     {
         try {
-            VNumeric &mySum = aggs.getNumericRef(0);
-            if (mySum.isNull()) {
+            vfloat &mySum = aggs.getFloatRef(0);
+            if (vfloatIsNull(mySum)) {
                 return;
             }
 
             // Combine all the other intermediate aggregates
             do {
-                const VNumeric &otherSum = aggsOther.getNumericRef(0);
-                if (otherSum.isNull()) {
-                    mySum.setNull();
+                const vfloat &otherSum = aggsOther.getFloatRef(0);
+                if (vfloatIsNull(otherSum)) {
+                    mySum = vfloat_null;
                     return;
                 }
             
                 // Do the actual accumulation 
-                mySum.accumulate(&otherSum);
+                mySum += otherSum;
             } while (aggsOther.next());
         } catch (std::exception &e) {
             // Standard exception. Quit.
@@ -73,9 +73,8 @@ class SumWithNull : public AggregateFunction
                            IntermediateAggs &aggs)
     {
         try {
-            VNumeric &out = resWriter.getNumericRef();
-            const VNumeric &sum = aggs.getNumericRef(0);
-            out.copy(&sum);
+            const vfloat &sum = aggs.getFloatRef(0);
+            resWriter.setFloat(sum);
         } catch (std::exception &e) {
             // Standard exception. Quit.
             vt_report_error(0, "Exception while computing aggregate output: [%s]", e.what());

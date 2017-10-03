@@ -1,1 +1,1 @@
-g++ -I sdk/include -g -Wall -Wno-unused-value -shared -fPIC -o SumWithNull.so SumWithNull.cpp sdk/include/Vertica.cpp
+g++ -I sdk/include -lintl -g -Wall -Wno-unused-value -shared -fPIC -o SumWithNull.so SumWithNull.cpp sdk/include/Vertica.cpp
