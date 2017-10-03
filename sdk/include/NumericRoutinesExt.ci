@@ -1,0 +1,690 @@
+/* Copyright (c) 2005 - 2015 Hewlett Packard Enterprise Development LP  -*- C++ -*- 
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
+ *
+ * Neither the name of the Hewlett Packard Enterprise Company nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ ****************************/
+
+/*
+ *
+ * Description: Core numeric processing routines, for inlining, etc
+ *
+ * Create Date: Feb 10, 2011
+ */
+#ifndef NUMERIC_ROUTINES_PRE_RT
+#define NUMERIC_ROUTINES_PRE_RT static inline
+#endif
+
+#ifndef NUMERIC_ROUTINES_POST_RT
+#define NUMERIC_ROUTINES_POST_RT
+#endif
+
+NUMERIC_ROUTINES_PRE_RT void NUMERIC_ROUTINES_POST_RT mulUnsignedN1(void *obuf, const void *ubuf, int uw, uint64 v)
+{
+    const uint64 *u = static_cast<const uint64 *>(ubuf);
+    uint64 *o = static_cast<uint64 *>(obuf);
+
+    Multiply(u[uw-1], v, o[uw-1], o[uw]); // N-by-1 multiply
+    for (int i = uw-2; i >= 0; --i) {
+        uint64 lo;
+        Multiply(u[i], v, o[i], lo);
+        o[i+1] += lo;
+        if (o[i+1] < lo) o[i]++;        // can't overflow
+    }
+}
+
+NUMERIC_ROUTINES_PRE_RT uint64 NUMERIC_ROUTINES_POST_RT divUnsignedN1(void *qbuf, int qw, int round,
+                             const void *ubuf, int uw, uint64 v)
+{
+    if (v == 0) {
+        if (isZero(ubuf, uw)) {
+            setZero(qbuf, qw);
+            return 0;                   // 0/0 -> 0,0
+        }
+        ereport(ERROR, (errcode(ERRCODE_DIVISION_BY_ZERO),
+                        errmsg("division by zero")));
+    }
+    Assert(qw > 0);
+    Assert(uw > 0);
+    const uint64 *ub = static_cast<const uint64 *>(ubuf);
+    uint64 *qb = static_cast<uint64 *>(qbuf);
+
+    if (qb == ub)
+        Assert(qw == uw);
+    else
+        NUMERIC_ROUTINES_POST_RT setZero(qb, qw-uw);
+
+    uint64 rem = 0, q, r;
+    for (int j = 0; j < uw; ++j) {
+        Divide(rem, ub[j], v, q, r);
+        rem = r;
+        int k = j + qw - uw;
+        if (k < 0)
+            Assert(q == 0);
+        else
+            qb[k] = q;
+    }
+
+    if (round && rem >= v - rem) // rem >= v / 2
+        NUMERIC_ROUTINES_POST_RT incrementNN(qb, qw);
+    return rem;
+}
+
+NUMERIC_ROUTINES_PRE_RT void NUMERIC_ROUTINES_POST_RT divUnsignedNN(void *qbuf, int qw, int round,
+                           uint64 *rbuf, int rw, const void *ubuf,
+                           int uw, const void *vbuf, int vw)
+{
+    Assert(qw > 0);
+    Assert(uw > 0);
+    Assert(vw > 0);
+
+    if (rbuf)
+        NUMERIC_ROUTINES_POST_RT setZero(rbuf, rw);
+
+    // Optimize out leading zeros from v
+    const uint64 *vb = static_cast<const uint64 *>(vbuf);
+    int vs = 0;
+    while (vb[vs] == 0)
+        if (++vs == vw) {
+            if (isZero(ubuf, uw)) {
+                setZero(qbuf, qw);
+                return;                 // 0/0 -> 0,0
+            }
+            ereport(ERROR, (errcode(ERRCODE_DIVISION_BY_ZERO),
+                            errmsg("division by zero")));
+        }
+    int n = vw - vs;                    // length of v in words
+
+    // Optimize out leading zeros from u
+    const uint64 *ub = static_cast<const uint64 *>(ubuf);
+    int us = 0;
+    while (ub[us] == 0)
+        if (++us == uw) {
+            NUMERIC_ROUTINES_POST_RT setZero(qbuf, qw);
+            return;                     // u == 0, so qbuf and rbuf = 0
+        }
+    int ul = uw - us;                   // length of u in words (m+n)
+
+    uint64 *qb = static_cast<uint64 *>(qbuf);
+
+    // Optimize N by 1 case
+    if (n == 1) {
+        uint64 rem = divUnsignedN1(qb, qw, round, ub+us, ul, vb[vw-1]);
+        if (rbuf)
+            rbuf[rw-1] = rem;
+        return;
+    }
+
+    // D1 Normalize
+    uint64 q, r;
+    uint64 v[n+2];                      // v is v[1..n] scaled by d
+    v[0] = v[n+1] = 0;                  // v[n+1] is a hack; verify if it works!
+    NUMERIC_ROUTINES_POST_RT copy(v+1, vb+vs, n);
+    uint64 d = __builtin_clzll(v[1]);   // count leading zero bits
+    NUMERIC_ROUTINES_POST_RT shiftLeftNN(v+1, n, d);
+
+    int m = ul - n;
+
+    uint64 u[ul+1];                     // u is u[0..ul] scaled by d
+    u[0] = 0;
+    NUMERIC_ROUTINES_POST_RT copy(u+1, ub+us, ul);
+    NUMERIC_ROUTINES_POST_RT shiftLeftNN(u, ul+1, d);
+
+    NUMERIC_ROUTINES_POST_RT setZero(qb, qw);
+
+    // D2 Loop for each q digit
+    for (int j = 0; j <= m; ++j) {
+        // D3 calculate qhat and rhat
+        if (u[j] == v[1]) {             // Divide will overflow
+            q = 0;
+            r = u[j+1];
+            goto tag4H;
+        }
+        Divide(u[j],u[j+1], v[1], q, r);
+
+        while (true) {
+            uint64 hi, lo;
+            Multiply(v[2], q, hi, lo);  // hack if vl==1
+            if (hi < r ||
+                (hi == r && lo <= u[j+2]))
+                break;                  // q is no more than 1 too high
+        tag4H:
+            --q;
+            r += v[1];
+            if (r < v[1])               // 056: overflow, quit
+                break;
+        }
+
+        uint64 t[n+1];                  // D4 multiply and subtract
+        mulUnsignedN1(t, v+1, n, q);
+        NUMERIC_ROUTINES_POST_RT subNN(u+j, u+j, t, n+1);
+
+        if (u[j] != 0) {                // D5 test remainder
+            NUMERIC_ROUTINES_POST_RT addNN(u+j, u+j, v, n+1); // D6 add back
+            --q;
+            Assert(u[j] == 0);
+        }
+        if (q != 0) {
+            int k = j - m + qw - 1;
+            Assert(k >= 0 && k < qw);
+            qb[k] = q;
+        }
+    }
+
+    if (rbuf) {
+        int i = Min(ul, n);
+        Assert(rw >= i);                              // rbuf overflow
+        NUMERIC_ROUTINES_POST_RT copy(rbuf+rw-i, u+ul+1-i, i); // D8 unnormalize
+        NUMERIC_ROUTINES_POST_RT shiftRightNN(rbuf+rw-i, i, d);
+    }
+
+    if (round && m >= 0) {
+        NUMERIC_ROUTINES_POST_RT shiftLeftNN(u+m, n+1, 1);        // double r
+        if (NUMERIC_ROUTINES_POST_RT compareNN(u+m, v, n+1) >= 0) // if r >= v/2
+            NUMERIC_ROUTINES_POST_RT incrementNN(qb, qw);
+    }
+    return;
+}
+
+NUMERIC_ROUTINES_PRE_RT ifloat NUMERIC_ROUTINES_POST_RT numericToFloat(const void *buf, int nwds, ifloat tenthtoscale)
+{
+    if (NUMERIC_ROUTINES_POST_RT isNull(buf, nwds)) {
+        return vfloat_null;
+    }
+    else {
+        bool sNeg = false;
+        uint64 tmp[nwds];
+        if (NUMERIC_ROUTINES_POST_RT isNeg(buf, nwds)) {
+            NUMERIC_ROUTINES_POST_RT copy(tmp, buf, nwds);
+            NUMERIC_ROUTINES_POST_RT invertSign(tmp, nwds);
+            buf = tmp;
+            sNeg = true;
+        }
+        long double rv = NUMERIC_ROUTINES_POST_RT convertPosToFloatNN(buf, nwds)
+            * tenthtoscale;
+        return sNeg ? -rv : rv;
+    }
+}
+
+NUMERIC_ROUTINES_PRE_RT void NUMERIC_ROUTINES_POST_RT numericMultiply(const uint64 *pa, int nwdsa,
+                            const uint64 *pb, int nwdsb,
+                            uint64 *outNum, int nwdso)
+{
+    if (nwdsa + nwdsb == nwdso)
+    {
+        if (NUMERIC_ROUTINES_POST_RT isNull(pa, nwdsa) ||
+            NUMERIC_ROUTINES_POST_RT isNull(pb, nwdsb))
+        {
+            NUMERIC_ROUTINES_POST_RT setNull(outNum, nwdso);
+        }
+        else
+        {
+            // Multiply unsigned
+            uint64 wdsa[nwdsa], wdsb[nwdsb]; // For sign inversions if needed
+            const void *pva = pa, *pvb = pb;
+            int negs = 0;
+            if (NUMERIC_ROUTINES_POST_RT isNeg(pa, nwdsa)) {
+                ++negs;
+                pva = wdsa;
+                NUMERIC_ROUTINES_POST_RT copy(wdsa, pa, nwdsa);
+                NUMERIC_ROUTINES_POST_RT invertSign(wdsa, nwdsa);
+            }
+            if (NUMERIC_ROUTINES_POST_RT isNeg(pb, nwdsb)) {
+                ++negs;
+                pvb = wdsb;
+                NUMERIC_ROUTINES_POST_RT copy(wdsb, pb, nwdsb);
+                NUMERIC_ROUTINES_POST_RT invertSign(wdsb, nwdsb);
+            }
+            NUMERIC_ROUTINES_POST_RT mulUnsignedNN(outNum, pva, nwdsa, pvb, nwdsb);
+            if (negs == 1) NUMERIC_ROUTINES_POST_RT invertSign(outNum, nwdso);
+        }
+    }
+    else
+    {
+        if (NUMERIC_ROUTINES_POST_RT isNull(pa, nwdsa) ||
+            NUMERIC_ROUTINES_POST_RT isNull(pb, nwdsb))
+        {
+            NUMERIC_ROUTINES_POST_RT setNull(outNum, nwdso);
+        }
+        else
+        {
+            // Multiply unsigned...
+            uint64 otemp[nwdsa+nwdsb]; // Result has to go in temp place
+            uint64 wdsa[nwdsa], wdsb[nwdsb]; // For sign inversions if needed
+            const void *pva = pa, *pvb = pb;
+            int negs = 0;
+            if (NUMERIC_ROUTINES_POST_RT isNeg(pa, nwdsa)) {
+                ++negs;
+                pva = wdsa;
+                NUMERIC_ROUTINES_POST_RT copy(wdsa, pa, nwdsa);
+                NUMERIC_ROUTINES_POST_RT invertSign(wdsa, nwdsa);
+            }
+            if (NUMERIC_ROUTINES_POST_RT isNeg(pb, nwdsb)) {
+                ++negs;
+                pvb = wdsb;
+                NUMERIC_ROUTINES_POST_RT copy(wdsb, pb, nwdsb);
+                NUMERIC_ROUTINES_POST_RT invertSign(wdsb, nwdsb);
+            }
+            NUMERIC_ROUTINES_POST_RT mulUnsignedNN(otemp, pva, nwdsa, pvb, nwdsb);
+            NUMERIC_ROUTINES_POST_RT copy(outNum, otemp+(nwdsa+nwdsb-nwdso), nwdso);
+            if (negs == 1) NUMERIC_ROUTINES_POST_RT invertSign(outNum, nwdso);
+        }
+    }
+}
+
+#ifndef NUMERIC_ROUTINES_SKIP_SOME
+NUMERIC_ROUTINES_PRE_RT void NUMERIC_ROUTINES_POST_RT setNumericBoundsFromType(uint64 *numUpperBound,
+                                     uint64 *numLowerBound, 
+                                     int nwdso, int32 typmod)
+{
+    int prec = PRECISIONFROMTYPMOD(typmod);
+    int length = nwdso << 3;
+    vsmemclr(numUpperBound, length);
+    vsmemcpy(numUpperBound + nwdso - Basics::powerOf10Sizes[prec],
+             Basics::powerOf10Words[prec],
+             Basics::powerOf10Sizes[prec] * 8);
+    NUMERIC_ROUTINES_POST_RT invertSign(numUpperBound, nwdso);
+    NUMERIC_ROUTINES_POST_RT incrementNN(numUpperBound, nwdso);
+    NUMERIC_ROUTINES_POST_RT invertSign(numUpperBound, nwdso);
+    vsmemclr(numLowerBound, length);
+    vsmemcpy(numLowerBound + nwdso - Basics::powerOf10Sizes[prec],
+             Basics::powerOf10Words[prec],
+             Basics::powerOf10Sizes[prec] * 8);
+    NUMERIC_ROUTINES_POST_RT invertSign(numLowerBound, nwdso);
+    NUMERIC_ROUTINES_POST_RT incrementNN(numLowerBound, nwdso);
+}
+
+NUMERIC_ROUTINES_PRE_RT bool NUMERIC_ROUTINES_POST_RT checkOverflowNN(const void *po, int nwdso, int32 typmodo) 
+{
+    uint64 numUpperBound[nwdso];
+    uint64 numLowerBound[nwdso];
+    setNumericBoundsFromType(numUpperBound, numLowerBound, nwdso, typmodo);
+    if (NUMERIC_ROUTINES_POST_RT compareNN(po, numUpperBound, nwdso) > 0) return false;
+    if (NUMERIC_ROUTINES_POST_RT compareNN(po, numLowerBound, nwdso) < 0) return false;
+    return true;
+}
+
+NUMERIC_ROUTINES_PRE_RT bool NUMERIC_ROUTINES_POST_RT checkOverflowNN(const void *po, int nwo, int nwdso, int32 typmodo) 
+{
+    if (nwo == nwdso) return checkOverflowNN(po, nwdso, typmodo);
+
+    uint64 numUpperBound[nwdso];
+    uint64 numLowerBound[nwdso];
+    setNumericBoundsFromType(numUpperBound, numLowerBound, nwdso, typmodo);
+
+    const int64 *w = static_cast<const int64 *>(po);
+    Assert(nwo >= nwdso);
+    if (NUMERIC_ROUTINES_POST_RT isNeg(po, nwo)) {
+        for (int i=0; i<nwo-nwdso; ++i) {
+            if (w[i] != -1LL) return false; // did not fit in nwdso
+        }
+        // Check remaining words
+        if (NUMERIC_ROUTINES_POST_RT ucompareNN(w+nwo-nwdso, numLowerBound, nwdso) < 0)
+           return false;
+    }
+    else {
+        for (int i=0; i<nwo-nwdso; ++i) {
+            if (w[i] != 0LL) return false; // did not fit in nwdso
+        }
+        // Check remaining words
+        if (NUMERIC_ROUTINES_POST_RT ucompareNN(w+nwo-nwdso, numUpperBound, nwdso) > 0)
+            return false;
+    }
+    return true;
+}
+
+
+// From VEval::NumericRescaleDown
+NUMERIC_ROUTINES_PRE_RT void NUMERIC_ROUTINES_POST_RT NumericRescaleDown(uint64 *wordso, int nwdso, int32 typmodo, uint64 *wordsi, int nwdsi, int32 typmodi)
+{
+    if (NUMERIC_ROUTINES_POST_RT isNull(wordsi, nwdsi)) {
+        NUMERIC_ROUTINES_POST_RT setNull(wordso, nwdso);
+        return;
+    }
+
+    bool neg = NUMERIC_ROUTINES_POST_RT isNeg(wordsi, nwdsi); // work with positive value
+    const void *pva = wordsi;
+    uint64 wdsa[nwdsi];
+    if (neg) {
+        NUMERIC_ROUTINES_POST_RT copy(wdsa, pva, nwdsi);
+        NUMERIC_ROUTINES_POST_RT invertSign(wdsa, nwdsi);
+        pva = wdsa;
+    }
+
+    int scale = Basics::getNumericScale(typmodi) -
+        Basics::getNumericScale(typmodo);
+    uint64 wdst[nwdsi];
+    NUMERIC_ROUTINES_POST_RT divUnsignedNN(wdst, nwdsi, 1, NULL, 0, pva, nwdsi, // round
+                                  Basics::powerOf10Words[scale],
+                                  Basics::powerOf10Sizes[scale]);
+
+    // Copy to output
+    if (nwdsi >= nwdso) {
+        // Truncation test
+        if (!checkOverflowNN(wdst, nwdsi, nwdso, typmodo))
+            ereport(ERROR,
+                    (errmsg("Value (%Le) exceeds range of type NUMERIC(%d,%d)", 
+                            NUMERIC_ROUTINES_POST_RT numericToFloat(wordsi, nwdsi, powl(10.0L, -SCALEFROMTYPMOD(typmodi))),
+                            getNumericPrecision(typmodo), getNumericScale(typmodo))));
+        NUMERIC_ROUTINES_POST_RT copy(wordso, wdst + (nwdsi - nwdso), nwdso);
+    }
+    else {
+        NUMERIC_ROUTINES_POST_RT copy(wordso + nwdso - nwdsi, wdst, nwdsi);
+        for (int i=0; i<nwdso - nwdsi; ++i) wordso[i] = 0;
+    }
+
+    // Restore sign
+    if (neg) NUMERIC_ROUTINES_POST_RT invertSign(wordso, nwdso); // round towards zero
+
+}
+
+// From VEval::NumericRescaleUp
+NUMERIC_ROUTINES_PRE_RT void NUMERIC_ROUTINES_POST_RT NumericRescaleUp(uint64 *wordso, int nwdso, int32 typmodo, uint64 *wordsi, int nwdsi, int32 typmodi)
+{
+    int scalei = Basics::getNumericScale(typmodi);
+    int scaleo = Basics::getNumericScale(typmodo);
+
+    if (NUMERIC_ROUTINES_POST_RT isNull(wordsi, nwdsi))
+        NUMERIC_ROUTINES_POST_RT setNull(wordso, nwdso);
+    else {
+        // Work unsigned
+        bool neg = NUMERIC_ROUTINES_POST_RT isNeg(wordsi, nwdsi);
+        const void *pva = wordsi;
+        uint64 wdsa[nwdsi];
+        if (neg) {
+            NUMERIC_ROUTINES_POST_RT copy(wdsa, pva, nwdsi);
+            NUMERIC_ROUTINES_POST_RT invertSign(wdsa, nwdsi);
+            pva = wdsa;
+        }
+
+        // Multiply up
+        int nwdst = nwdsi + Basics::powerOf10Sizes[scaleo - scalei];
+        uint64 wdst[nwdst];
+        NUMERIC_ROUTINES_POST_RT mulUnsignedNN(wdst, pva, nwdsi,
+                                      Basics::powerOf10Words[scaleo - scalei],
+                                      Basics::powerOf10Sizes[scaleo - scalei]);
+
+        // Copy to output
+        if (nwdst >= nwdso) {
+            // Truncation test
+            if (!checkOverflowNN(wdst, nwdst, nwdso, typmodo)) {
+                ereport(ERROR,
+                        (errmsg("Value (%Le) exceeds range of type NUMERIC(%d,%d)",
+                                NUMERIC_ROUTINES_POST_RT numericToFloat(wordsi, nwdsi, powl(10.0L, -SCALEFROMTYPMOD(typmodi))),
+                                getNumericPrecision(typmodo), getNumericScale(typmodo))));
+            }
+
+            NUMERIC_ROUTINES_POST_RT copy(wordso, wdst + nwdst - nwdso, nwdso);
+        }
+        else {
+            NUMERIC_ROUTINES_POST_RT copy(wordso + nwdso - nwdst, wdst, nwdst);
+            for (int i=0; i<nwdso - nwdst; ++i) wordso[i] = 0;
+        }
+
+        // Restore sign
+        if (neg) NUMERIC_ROUTINES_POST_RT invertSign(wordso, nwdso);
+    }
+}
+
+// From VEval::NumericRescaleSameScaleSmallerPrec
+NUMERIC_ROUTINES_PRE_RT void NUMERIC_ROUTINES_POST_RT NumericRescaleSameScaleSmallerPrec(uint64 *wordso, int nwdso, int32 typmodo, uint64 *wordsi, int nwdsi, int32 typmodi)
+{
+    if (NUMERIC_ROUTINES_POST_RT isNull(wordsi, nwdsi))
+        NUMERIC_ROUTINES_POST_RT setNull(wordso, nwdso);
+    else
+    {
+        // Check for truncation
+        if (!checkOverflowNN(wordsi, nwdsi, nwdso, typmodo)) {
+            ereport(ERROR,
+                    (errmsg("Value (%Le) exceeds range of type NUMERIC(%d,%d)",
+                           NUMERIC_ROUTINES_POST_RT numericToFloat(wordsi, nwdsi, powl(10.0L, -SCALEFROMTYPMOD(typmodi))),
+                            getNumericPrecision(typmodo), getNumericScale(typmodo))));
+        }
+        NUMERIC_ROUTINES_POST_RT copy(wordso, wordsi + nwdsi - nwdso, nwdso);
+    }
+}
+
+/*
+ * \brief Cast a numeric from one typmod to another. The params wordsi, nwdsi and
+ * typmodi are the words, number of words and typmod of the input numeric,
+ * while wordso, nwdso and typmodo are the words, number of words and typmod
+ * of output numeric. It is the caller's responsibility to ensure that wordso
+ * has space to store 'nwdso' words.
+ */
+NUMERIC_ROUTINES_PRE_RT void NUMERIC_ROUTINES_POST_RT castNumeric(uint64 *wordso, int nwdso, int32 typmodo, uint64 *wordsi, int nwdsi, int32 typmodi)
+{
+    int scalei = Basics::getNumericScale(typmodi);
+    int scaleo = Basics::getNumericScale(typmodo);
+
+    // Resize per precision, scale
+    if (Basics::isSimilarNumericTypmod(typmodi, typmodo)) {
+        VIAssert(nwdsi == nwdso);
+        // Could override the non-copy functions...
+        if (PRECISIONFROMTYPMOD(typmodi) >
+            PRECISIONFROMTYPMOD(typmodo))
+        {
+            NumericRescaleSameScaleSmallerPrec(wordso, nwdso, typmodo, wordsi, nwdsi, typmodi);
+        }
+        else
+        {
+            // Same scale and precision
+            NUMERIC_ROUTINES_POST_RT copy(wordso, wordsi, nwdsi);
+        }
+    }
+    else if (scalei == scaleo) {
+        if (nwdso < nwdsi) {
+            // Truncation.
+            NumericRescaleSameScaleSmallerPrec(wordso, nwdso, typmodo, wordsi, nwdsi, typmodi);            
+        }
+        else {
+            // Expansion
+            // From NumericRescaleSameScaleLargerPrec
+            if (NUMERIC_ROUTINES_POST_RT isNull(wordsi, nwdsi))
+                NUMERIC_ROUTINES_POST_RT setNull(wordso, nwdso);
+            else {
+                // Copy
+                NUMERIC_ROUTINES_POST_RT copy(wordso + nwdso - nwdsi, wordsi, nwdsi);
+                // Sign extend
+                uint64 ext = NUMERIC_ROUTINES_POST_RT isNeg(wordsi, nwdsi) ? -1LLU : 0;
+                uint64 *pout = wordso;
+                for (int i=0; i<nwdso - nwdsi; ++i) pout[i] = ext;
+            }
+        }
+    }
+    else if (scalei > scaleo)
+    {
+        NumericRescaleDown(wordso, nwdso, typmodo, wordsi, nwdsi, typmodi);
+    }
+    else
+    {
+        NumericRescaleUp(wordso, nwdso, typmodo, wordsi, nwdsi, typmodi);
+    }
+}
+
+NUMERIC_ROUTINES_PRE_RT bool NUMERIC_ROUTINES_POST_RT rescaleNumeric(void *out, int ow, int pout, int sout,
+                           void *in, int iw, int pin, int sin)
+{
+    // Adjust the scale as necessary
+    int adj = sin - sout;               // if adj > 0, round
+    if (pin - adj > pout)
+        return false;                   // will not fit
+
+    uint64 *ob = static_cast<uint64 *>(out);
+    bool neg = NUMERIC_ROUTINES_POST_RT isNeg(in, iw);
+    if (neg) NUMERIC_ROUTINES_POST_RT invertSign(in, iw);
+    if (adj == 0) {
+        Assert(ow >= iw);
+        NUMERIC_ROUTINES_POST_RT copy(ob + ow - iw, in, iw);
+    }
+    else if (adj < 0) {                 // increase the scale
+        int size = powerOf10Sizes[-adj];
+        int nwdsprod = iw + size;
+        uint64 prod[nwdsprod];
+        NUMERIC_ROUTINES_POST_RT mulUnsignedNN(prod, in, iw, powerOf10Words[-adj], size);
+        iw = Min(nwdsprod, ow);         // non-zero prod should fit into out
+        NUMERIC_ROUTINES_POST_RT copy(ob + ow - iw, prod + nwdsprod - iw, iw);
+    } else {
+        NUMERIC_ROUTINES_POST_RT divUnsignedNN(ob, ow, 1, NULL, 0, in, iw, // round
+                      powerOf10Words[adj], powerOf10Sizes[adj]);
+        iw = ow;
+    }
+
+    for (int i = 0; i < ow - iw; ++i) ob[i] = 0;
+    if (neg) NUMERIC_ROUTINES_POST_RT invertSign(ob, ow);
+
+    return true;
+}
+
+NUMERIC_ROUTINES_PRE_RT bool NUMERIC_ROUTINES_POST_RT setFromFloat(void *bbuf, int bwords,
+                  const FiveToScale &fiveToScale,
+                  long double value, bool round)
+{
+    NUMERIC_ROUTINES_POST_RT long_double_parts ldp(value);
+
+    int exp = ldp.exponent;
+    bool neg = (exp & 0x8000) != 0;
+    exp &= 0x7fff;
+
+    // Check for Bad Things (infinity, NaN, etc.)
+    if (exp == 0x7fff) {
+        vfloat v = value;
+        if (vfloatIsNull(&v)) {
+            NUMERIC_ROUTINES_POST_RT setNull(bbuf, bwords);
+            return true;
+        }
+        else {
+            //NaN, or some other garbage we can't make NUMERIC
+            return false;
+        }
+    }
+
+    // Check for zero.
+    if (exp == 0 && ldp.mantissa == 0) {
+        NUMERIC_ROUTINES_POST_RT setZero(bbuf, bwords);
+        return true;
+    }
+    exp -= 16383;
+
+    int bitsToShift = fiveToScale.scale + exp - 63;
+
+    // Setup intermediate value with enough space to multiply the mantissa, first by
+    // 5^scale and then by 2^(scale+exp-63).
+    int shiftWords = (abs(bitsToShift)+63)/64;
+    int nw = 1 + fiveToScale.wordCount + shiftWords;
+    uint64 buf[nw];
+
+    if (bitsToShift >= 0) {
+        // Multiply.
+        NUMERIC_ROUTINES_POST_RT mulUnsignedN1(buf+shiftWords, fiveToScale.value, fiveToScale.wordCount, ldp.mantissa);
+
+        // Shift to appropriate position.
+        if (shiftWords != 0)
+            buf[shiftWords-1] = 0;      // clear a word of high bits
+        NUMERIC_ROUTINES_POST_RT shiftLeftNN(buf, nw, bitsToShift);
+    } else {
+        // Multiply.
+        NUMERIC_ROUTINES_POST_RT mulUnsignedN1(buf, fiveToScale.value, fiveToScale.wordCount, ldp.mantissa);
+
+        // Shift to appropriate position.
+        buf[nw - shiftWords] = 0;       // VER-18339 Valgrind false positive
+        NUMERIC_ROUTINES_POST_RT shiftRightNN(buf, nw, -bitsToShift);
+        nw -= shiftWords;
+
+        if (round && int64(buf[nw]) < 0)
+            NUMERIC_ROUTINES_POST_RT incrementNN(buf, nw);
+    }
+
+    // Check overflow.
+    int j=0;
+    for ( ; j<nw-bwords; ++j) {
+        if (buf[j]) return false;
+    }
+    // Copy to output.
+    uint64 *result = static_cast<uint64 *>(bbuf);
+    int i=0;
+    for ( ; i<bwords-nw; ++i) {
+        result[i] = 0;
+    }
+    for ( ; i<bwords; ++i, ++j) {
+        result[i] = buf[j];
+    }
+
+    // Make negative if needed
+    if (neg) NUMERIC_ROUTINES_POST_RT invertSign(bbuf, bwords);
+
+    return true;
+}
+
+void NUMERIC_ROUTINES_PRE_RT numericDivide NUMERIC_ROUTINES_POST_RT
+                         (const uint64 *pa, int nwdsa, int32 typmoda,
+                          const uint64 *pb, int nwdsb, int32 typmodb,
+                          uint64 *outNum, int nwdso, int32 typmodo)
+{
+    if (NUMERIC_ROUTINES_POST_RT isNull(pa, nwdsa) ||
+        NUMERIC_ROUTINES_POST_RT isNull(pb, nwdsb))
+    {
+        NUMERIC_ROUTINES_POST_RT setNull(outNum, nwdso);
+        return;
+    }
+
+    uint64 wdsa[nwdsa], wdsb[nwdsb]; // For sign inversions if needed
+    const uint64 *pva = pa, *pvb = pb;
+    int negs = 0;
+    if (NUMERIC_ROUTINES_POST_RT isNeg(pva, nwdsa)) {
+        ++negs;
+        NUMERIC_ROUTINES_POST_RT copy(wdsa, pva, nwdsa);
+        NUMERIC_ROUTINES_POST_RT invertSign(wdsa, nwdsa);
+        pva = wdsa;
+    }
+    if (NUMERIC_ROUTINES_POST_RT isNeg(pvb, nwdsb)) {
+        ++negs;
+        NUMERIC_ROUTINES_POST_RT copy(wdsb, pvb, nwdsb);
+        NUMERIC_ROUTINES_POST_RT invertSign(wdsb, nwdsb);
+        pvb = wdsb;
+    }
+
+    // Scale numerator (pa) if necessary
+    int scale = SCALEFROMTYPMOD(typmodb) - SCALEFROMTYPMOD(typmoda) + SCALEFROMTYPMOD(typmodo);
+    Assert(scale >= 0);
+    int nwdsp = Basics::powerOf10Sizes[scale];
+    int nwdss = nwdsa;
+    uint64 wdss[nwdss + nwdsp];
+    if (scale != 0) {
+        Assert(scale > 0);
+        nwdss = nwdss + nwdsp;
+        NUMERIC_ROUTINES_POST_RT mulUnsignedNN(wdss, pva, nwdsa,
+                                      Basics::powerOf10Words[scale],
+                                      nwdsp);
+        pva = wdss;
+    }
+
+    NUMERIC_ROUTINES_POST_RT divUnsignedNN(outNum, nwdso, 1, NULL, 0,
+                                  pva, nwdss, pvb, nwdsb); // round
+    if (negs == 1) NUMERIC_ROUTINES_POST_RT invertSign(outNum, nwdso);
+}
+#endif

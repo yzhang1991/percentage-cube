@@ -1,0 +1,388 @@
+/* Copyright (c) 2005 - 2015 Hewlett Packard Enterprise Development LP  -*- C++ -*- 
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
+ *
+ * Neither the name of the Hewlett Packard Enterprise Company nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ ****************************/
+
+/*
+ *
+ * Description: Core numeric processing routines, for inlining, etc
+ *
+ * Create Date: Feb 10, 2011
+ */
+#ifndef NUMERIC_ROUTINES_PRE_RT
+#define NUMERIC_ROUTINES_PRE_RT static inline
+#endif
+
+#ifndef NUMERIC_ROUTINES_POST_RT
+#define NUMERIC_ROUTINES_POST_RT
+#endif
+
+#ifndef NUMERIC_ROUTINES_SKIP_SOME
+/**
+ * x86 only
+ * 80-bit extended precision float
+ * 64 bit mantissa, stored little endian (just like a 64-bit int)
+ *    Note that the mantissa does not have an implicit "1" bit
+ *      thus eliminating the concept of denormal numbers.
+ * 16 bit exponent, also little endian, within the next 64 bits.
+ *    High bit is sign
+ *    Lower 15 bits are "excess 16383"
+ * Example:
+ * 1.0 is stored as, in binary:
+ *  mantissa: 1000000000000000000000000000000000000000000000000000000000000000,
+ *  exponent: 0011111111111111
+ */
+union long_double_parts
+{
+    long_double_parts(long double v = 0.0) : value(v) {}
+    long double value;
+    struct
+    {
+        unsigned long long int mantissa;
+        unsigned short int exponent; // Includes the sign bit.
+        unsigned short int remainder[3];
+    };
+};
+
+NUMERIC_ROUTINES_PRE_RT void NUMERIC_ROUTINES_POST_RT copy(void *buf, const void *src, int nWords)
+{
+    const uint64 *ubuf = static_cast<const uint64 *>(src);
+    uint64 *ubufo = static_cast<uint64 *>(buf);
+
+    for (int i=0; i<nWords; ++i) ubufo[i] = ubuf[i];
+}
+
+NUMERIC_ROUTINES_PRE_RT bool NUMERIC_ROUTINES_POST_RT isNeg(const void *buf, int nWords){
+    const int64 *ibuf = static_cast<const int64 *>(buf);
+    Assert (nWords > 0);
+    return ibuf[0] < 0;
+}
+
+NUMERIC_ROUTINES_PRE_RT int NUMERIC_ROUTINES_POST_RT ucompareNN(const void *buf1, const void *buf2, int nWords){
+    Assert (nWords > 0);
+    const uint64 *ubuf1 = static_cast<const uint64 *>(buf1);
+    const uint64 *ubuf2 = static_cast<const uint64 *>(buf2);
+
+    for (int i=0; i<nWords; ++i) {
+        if (ubuf1[i] != ubuf2[i]) return ubuf1[i] < ubuf2[i] ? -1 : 1;
+    }
+    return 0; // ==
+}
+
+#endif
+
+NUMERIC_ROUTINES_PRE_RT void NUMERIC_ROUTINES_POST_RT setZero(void *buf, int nWords){
+    int64 * ibuf = static_cast<int64 *>(buf);
+    for (int i=0; i<nWords; ++i) ibuf[i] = 0;
+}
+
+NUMERIC_ROUTINES_PRE_RT bool NUMERIC_ROUTINES_POST_RT isZero(const void *buf, int nWords){
+    const int64 *ibuf = static_cast<const int64 *>(buf);
+    int64 res = 0;
+    for (int i=0; i<nWords; ++i) {
+        res |= ibuf[i];
+    }
+    return res == 0;
+}
+
+NUMERIC_ROUTINES_PRE_RT void NUMERIC_ROUTINES_POST_RT setNull(void *buf, int nWords){
+    int64 *ibuf = static_cast<int64 *>(buf);
+    Assert (nWords > 0);
+    ibuf[0] = vint_null;
+    for (int i=1; i<nWords; ++i) ibuf[i] = 0;
+}
+
+NUMERIC_ROUTINES_PRE_RT bool NUMERIC_ROUTINES_POST_RT isNull(const void *buf, int nWords){
+    const int64 *ibuf = static_cast<const int64 *>(buf);
+    Assert (nWords > 0);
+    if (ibuf[0] != vint_null) return false;
+    int64 res = 0;
+    for (int i=1; i<nWords; ++i) {
+        res |= ibuf[i];
+    }
+    return res == 0;
+}
+
+NUMERIC_ROUTINES_PRE_RT bool NUMERIC_ROUTINES_POST_RT isEqualNN(const void *buf1, const void *buf2, int nWords){
+    const int64 *ibuf1 = static_cast<const int64 *>(buf1);
+    const int64 *ibuf2 = static_cast<const int64 *>(buf2);
+    int64 res = 0;
+    for (int i=0; i<nWords; ++i) {
+        res |= ibuf1[i] - ibuf2[i];
+    }
+    return res == 0;
+}
+
+NUMERIC_ROUTINES_PRE_RT int NUMERIC_ROUTINES_POST_RT compareNN(const void *buf1, const void *buf2, int nWords){
+    Assert (nWords > 0);
+    const int64 *ibuf1 = static_cast<const int64 *>(buf1);
+    const int64 *ibuf2 = static_cast<const int64 *>(buf2);
+    const uint64 *ubuf1 = static_cast<const uint64 *>(buf1);
+    const uint64 *ubuf2 = static_cast<const uint64 *>(buf2);
+
+    if (ibuf1[0] != ibuf2[0]) return ibuf1[0] < ibuf2[0] ? -1 : 1;
+
+    for (int i=1; i<nWords; ++i) {
+        if (ubuf1[i] != ubuf2[i]) return ubuf1[i] < ubuf2[i] ? -1 : 1;
+    }
+    return 0; // ==
+}
+
+NUMERIC_ROUTINES_PRE_RT void NUMERIC_ROUTINES_POST_RT incrementNN(void *buf, int nWords) {
+    uint64 *ubuf = static_cast<uint64 *>(buf);
+    uint64 cf = 1;
+    int i = nWords;
+    while (cf && i>0) {
+        --i;
+        ubuf[i] += cf;
+        cf = (ubuf[i] == 0);
+    }
+}
+
+NUMERIC_ROUTINES_PRE_RT void NUMERIC_ROUTINES_POST_RT invertSign(void *buf, int nWords) {
+    uint64 *ubuf = static_cast<uint64 *>(buf);
+    for (int i=0; i<nWords; ++i) ubuf[i] ^= 0xFFFFFFFFFFFFFFFFLLU;
+    incrementNN(ubuf, nWords);
+}
+
+NUMERIC_ROUTINES_PRE_RT uint64 NUMERIC_ROUTINES_POST_RT addNN(void *outBuf, const void *buf1, const void *buf2, int nWords) {
+    const uint64 *ubuf1 = static_cast<const uint64 *>(buf1);
+    const uint64 *ubuf2 = static_cast<const uint64 *>(buf2);
+    uint64 *ubufo = static_cast<uint64 *>(outBuf);
+
+    uint64 cf = 0;
+    for (int i=nWords-1; i>=0; --i)
+    {
+        uint64 ncf = 0;
+        uint64 rw = ubuf1[i]+ubuf2[i];
+        if (ubuf1[i] > rw) ++ncf;
+        uint64 rw2 = rw+cf;
+        if (rw > rw2) ++ncf;
+        ubufo[i] = rw2;
+        cf = ncf;
+    }
+    return cf;
+}
+
+NUMERIC_ROUTINES_PRE_RT uint64 NUMERIC_ROUTINES_POST_RT accumulateNN(void *outBuf, const void *buf1, int nWords) {
+    const uint64 *ubuf1 = static_cast<const uint64 *>(buf1);
+    uint64 *ubufo = static_cast<uint64 *>(outBuf);
+
+    uint64 cf = 0;
+    for (int i=nWords-1; i>=0; --i)
+    {
+        uint64 ncf = 0;
+        uint64 rw = ubuf1[i]+ubufo[i];
+        if (ubufo[i] > rw) ++ncf;
+        uint64 rw2 = rw+cf;
+        if (rw > rw2) ++ncf;
+        ubufo[i] = rw2;
+        cf = ncf;
+    }
+    return cf;
+}
+
+/** 
+ * \brief Subtract 2 numbers w/ same number of digits
+ *  No null handling
+ */
+NUMERIC_ROUTINES_PRE_RT void NUMERIC_ROUTINES_POST_RT subNN(void *outBuf, const void *buf1, const void *buf2, int nWords) {
+    const uint64 *ubuf1 = static_cast<const uint64 *>(buf1);
+    const uint64 *ubuf2 = static_cast<const uint64 *>(buf2);
+    uint64 *ubufo = static_cast<uint64 *>(outBuf);
+
+    uint64 cf = 0;
+    for (int i=nWords-1; i>=0; --i)
+    {
+        uint64 ncf = 0;
+        uint64 rw = ubuf1[i]-ubuf2[i];
+        if (ubuf1[i] < rw) --ncf;
+        uint64 rw2 = rw+cf;
+        if (rw < rw2) --ncf;
+        ubufo[i] = rw2;
+        cf = ncf;
+    }
+}
+
+NUMERIC_ROUTINES_PRE_RT void NUMERIC_ROUTINES_POST_RT shiftRightNN(void *buf, unsigned nw, unsigned bitsToShift)
+{
+    Assert(nw > bitsToShift/64);
+    uint64 *bbuf = static_cast<uint64 *>(buf);
+    unsigned from = nw - (bitsToShift / 64) - 1, to = nw - 1;
+    unsigned shift = bitsToShift % 64;
+    if (shift==0) {
+        for ( ; from > 0; --from) {
+            bbuf[to--] = bbuf[from];
+        }
+        bbuf[to] = bbuf[from];
+    } else {
+        for ( ; from > 0; --from) {
+            bbuf[to--] = (bbuf[from-1] << (64 - shift)) | (bbuf[from] >> shift);
+        }
+        bbuf[to] = bbuf[from] >> shift;
+    }
+    while (to > 0) bbuf[--to] = 0;
+}
+
+NUMERIC_ROUTINES_PRE_RT void NUMERIC_ROUTINES_POST_RT shiftLeftNN(void *buf, unsigned nw, unsigned bitsToShift)
+{
+    Assert(nw > bitsToShift/64);
+    uint64 *bbuf = static_cast<uint64 *>(buf);
+    unsigned from = bitsToShift / 64, to = 0;
+    unsigned shift = bitsToShift % 64;
+    if (shift==0) {
+        for ( ; from < nw-1; ++from) {
+            bbuf[to++] = bbuf[from];
+        }
+        bbuf[to] = bbuf[from];
+    } else {
+        for ( ; from < nw-1; ++from) {
+            bbuf[to++] = (bbuf[from] << shift) | (bbuf[from+1] >> (64 - shift));
+        }
+        bbuf[to] = bbuf[from] << shift;
+    }
+    while (to < nw-1) bbuf[++to] = 0;
+}
+
+NUMERIC_ROUTINES_PRE_RT void NUMERIC_ROUTINES_POST_RT fromIntNN(void *buf, int nWords, int64 val)
+{
+    uint64 *ubufo = static_cast<uint64 *>(buf);
+    Assert (nWords > 0);
+
+    ubufo[nWords - 1] = uint64(val);
+    // Sign extend
+    uint64 ext = (val & vint_null) ? -1LLU : 0;
+    for (int i=0; i<nWords - 1; ++i) ubufo[i] = ext;
+}
+
+NUMERIC_ROUTINES_PRE_RT bool NUMERIC_ROUTINES_POST_RT toIntNN(int64 &out, const void *buf, int nWords)
+{
+    const int64 *ibuf = static_cast<const int64 *>(buf);
+    Assert (nWords > 0);
+    out = ibuf[nWords-1];
+    if (out & vint_null) {
+        for (int i=0; i<nWords - 1; ++i) {
+            if (ibuf[i] != -1LL) return false;
+        }
+    }
+    else {
+        for (int i=0; i<nWords - 1; ++i) {
+            if (ibuf[i] != 0) return false;
+        }
+    }
+    return true;
+}
+
+NUMERIC_ROUTINES_PRE_RT int NUMERIC_ROUTINES_POST_RT usedWordsUnsigned(const void *buf, int nWords)
+{
+    const uint64 *ubuf = static_cast<const uint64 *>(buf);
+    int unusedWords = 0;
+    for (; (unusedWords < nWords) && !ubuf[unusedWords]; ++unusedWords) ;
+    return nWords - unusedWords;
+}
+
+NUMERIC_ROUTINES_PRE_RT void NUMERIC_ROUTINES_POST_RT mulUnsignedNN(void *obuf, const void *buf1, int nw1,
+                           const void *buf2, int nw2)
+{
+    const uint64 *ubuf1 = static_cast<const uint64 *>(buf1);
+    const uint64 *ubuf2 = static_cast<const uint64 *>(buf2);
+    uint64 *ubufo = static_cast<uint64 *>(obuf);
+
+    int nwo = nw1+nw2;
+    setZero(obuf, nwo);
+
+    Assert (nw1>0);
+    Assert (nw2>0);
+
+    // Optimize out leading and trailing zeros
+    int s1 = 0, e1 = nw1-1;
+    for (; (s1 < nw1) && !ubuf1[s1]; ++s1) ;
+    for (; (e1 >= 0) && !ubuf1[e1]; --e1) ;
+
+    // Now multiply
+    for (int i2=nw2-1; i2 >= 0; --i2)
+    {
+        if (!ubuf2[i2]) continue; // Optimize out extra 0s
+
+        for (int i1 = e1; i1>= s1; --i1)
+        {
+            uint64 rl;
+            uint64 rh;
+
+            Multiply(ubuf1[i1], ubuf2[i2], rh, rl);
+
+            // Add to the result (w/carry)
+            int idx = i1 + i2;
+            ubufo[idx+1] += rl;
+            if (ubufo[idx+1] < rl) ++rh; // can't overflow
+            ubufo[idx] += rh;
+            uint64 cf = (ubufo[idx] < rh);
+
+            // Propagate carry
+            while (cf) {
+                ubufo[--idx] += cf;
+                cf = (ubufo[idx] == 0);
+            }
+        }
+    }
+}
+
+NUMERIC_ROUTINES_PRE_RT long double NUMERIC_ROUTINES_POST_RT convertPosToFloatNN(const void *bbuf, int bwords)
+{   
+    const uint64 *buf = static_cast<const uint64 *>(bbuf);
+
+    // Count leading zero bits
+    int zbits = 0;
+    int i; // Will index the first nonzero word
+    for (i=0; i<bwords; ++i) {
+        if (buf[i] != 0) {
+            zbits += __builtin_clzll(buf[i]);
+            break;
+        }
+        zbits += 64;
+    }
+    int tbits = bwords * 64;
+    if (zbits == tbits) return 0.0L; // Is zero, let's not confuse ourselves.
+
+    // Pick out mantissa
+    uint64 m = buf[i] << (zbits & 63);
+    ++i;
+    if ((zbits & 63) && i != bwords) {
+         m |= (buf[i]) >> (64 - (zbits & 63));
+    }
+
+    // Build resulting float
+    long_double_parts ldp;
+    ldp.mantissa = m;
+    ldp.exponent = tbits - zbits + 16382; // 1 nonzero bit = 2^0 = 16383 exponent
+
+    return ldp.value;
+}
+
