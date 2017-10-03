@@ -27,7 +27,7 @@ public class jPctCubeExpt1 {
         StringBuilder fullStatsBuilder = new StringBuilder();
         Config config = Config.getConfigFromFile("config.ini");
         // Try 1% to 5%
-        for (int nullPercentage = 1; nullPercentage <= 5; nullPercentage++) {
+        for (int nullPercentage = 0; nullPercentage < 20; nullPercentage+=5) {
             jPctCubeExpt1 experiment = new jPctCubeExpt1(config, nullPercentage);
             fullStatsBuilder.append(experiment.run()).append("\n");
         }

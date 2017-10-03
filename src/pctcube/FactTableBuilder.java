@@ -84,7 +84,7 @@ public class FactTableBuilder {
         for (int i = 0; i < rowCount; i++) {
             for (int j = 0; j < columns.size() - 1; j++) {
                 insertStmt.setString(j + 1, // index start from 1
-                        rand.nextInt(100) > nullIn100 ?
+                        rand.nextInt(100) >= nullIn100 ?
                                 String.format("d%d_group%d", j, rand.nextInt(cardinalities[j])) :
                                 null
                         );
