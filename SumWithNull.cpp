@@ -95,8 +95,8 @@ class SumWithNullFactory : public AggregateFunctionFactory
                               ColumnTypes &argTypes, 
                               ColumnTypes &returnType)
     {
-        argTypes.addNumeric();
-        returnType.addNumeric();
+        argTypes.addFloat();
+        returnType.addFloat();
     }
 
     // Provide return type length/scale/precision information (given the input
@@ -105,23 +105,14 @@ class SumWithNullFactory : public AggregateFunctionFactory
                                const SizedColumnTypes &inputTypes, 
                                SizedColumnTypes &outputTypes)
     {
-        const VerticaType &inType = inputTypes.getColumnType(0);
-        outputTypes.addNumeric(inType.getNumericPrecision(), inType.getNumericScale());
+        outputTypes.addFloat();
     }
 
     virtual void getIntermediateTypes(ServerInterface &srvInterface,
                                       const SizedColumnTypes &inputTypes, 
                                       SizedColumnTypes &intermediateTypeMetaData)
     {
-        const VerticaType &inType = inputTypes.getColumnType(0);
-
-        // intermediate sum
-        int32 interPrec = inType.getNumericPrecision() + 3; // provision 1000x precision if possible
-        const int32 MAX_NUMERIC_PREC = 1024;
-        if (interPrec > MAX_NUMERIC_PREC) {
-            interPrec = MAX_NUMERIC_PREC;
-        }
-        intermediateTypeMetaData.addNumeric(interPrec, inType.getNumericScale());
+        intermediateTypeMetaData.addFloat();
     }
 
     // Create an instance of the AggregateFunction
