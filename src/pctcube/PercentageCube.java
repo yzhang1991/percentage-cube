@@ -96,6 +96,10 @@ public final class PercentageCube extends QuerySet {
         return m_olapCubeTable;
     }
 
+    public boolean usesUDF() {
+        return m_useUDF;
+    }
+
     protected Database m_database;
     protected Table m_factTable;
     protected Table m_pctCubeTable;
@@ -108,6 +112,8 @@ public final class PercentageCube extends QuerySet {
     protected int m_topk = 0;
     protected int m_rowCount = 0; // row count, zero means no threshold applied.
     protected boolean m_incremental = false;
+    protected boolean m_useUDF = false; // whether use the user-defined aggregate function sumnull()
+    // sumnull() will return null if any of the values being summed is null.
 
     protected static final Logger m_logger = Logger.getLogger(PercentageCube.class.getName());
 }

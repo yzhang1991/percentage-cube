@@ -103,6 +103,9 @@ public class PercentageCubeInitializer implements PercentageCubeVisitor {
 
         // incremental
         cube.m_incremental = Boolean.valueOf(parser.getArgumentValue("incremental"));
+
+        // uses UDF
+        cube.m_useUDF = Boolean.valueOf(parser.getArgumentValue("udf"));
     }
 
     private final Database m_database;

@@ -45,6 +45,7 @@ public class jPctCubeExpt1 {
     private FactTableBuilder m_factTableBuilder;
     private Table m_factTable;
     private PercentageCube m_cube;
+    private PercentageCube m_cubeUDF;
     private Config m_config;
     private DbConnection m_connection;
 
@@ -59,6 +60,8 @@ public class jPctCubeExpt1 {
 
         m_cube = new PercentageCube(m_database,
                 new String[] {m_factTableBuilder.getCubeParameter()});
+        m_cubeUDF = new PercentageCube(m_database,
+                new String[] {m_factTableBuilder.getCubeParameter(), "udf=true"});
 
         m_config = config;
         m_connection = new DbConnection(config);
@@ -66,8 +69,8 @@ public class jPctCubeExpt1 {
 
     private static void printHeader(String className) {
         printLogStatic(className, HORIZONTAL_RULE);
-        printLogStatic(className, "%8s%8s%8s%10s",
-                "n", "d", "null%", "original");
+        printLogStatic(className, "%8s%8s%8s%10s%10s",
+                "n", "d", "null%", "original", "udf");
         printLogStatic(className, HORIZONTAL_RULE);
     }
 
@@ -75,16 +78,17 @@ public class jPctCubeExpt1 {
         if (m_config.needToGenerateData()) {
             generateData();
         }
-        double executionTime = runExpt();
-        String retData = String.format("%8d%8d%8d%10.2f",
-                m_config.getDataSize(), DIMENSION_COUNT, m_nullPercentage, executionTime);
+        double timeOriginal = runOriginal();
+        double timeUDF = runWithUDF();
+        String retData = String.format("%8d%8d%8d%10.2f%10.2f",
+                m_config.getDataSize(), DIMENSION_COUNT, m_nullPercentage, timeOriginal, timeUDF);
         printHeader(this.getClass().getSimpleName());
         printLog(retData);
         printLog(HORIZONTAL_RULE);
         return retData;
     }
 
-    private double runExpt() throws SQLException {
+    private double runOriginal() throws SQLException {
         printLog("Start building the cube.");
         long startTime = System.currentTimeMillis();
 
@@ -98,6 +102,19 @@ public class jPctCubeExpt1 {
         return duration;
     }
 
+    private double runWithUDF() throws SQLException {
+        printLog("Start building the cube.");
+        long startTime = System.currentTimeMillis();
+
+        m_cubeUDF.evaluate();
+        m_connection.executeQuerySet(m_cubeUDF);
+
+        long endTime = System.currentTimeMillis();
+        double duration = (endTime - startTime) / 1000.0;
+        printLog("Finished in %.2f seconds.", duration);
+        m_connection.execute("SELECT CLEAR_CACHES();");
+        return duration;
+    }
 
     private void generateData() throws SQLException, ClassNotFoundException {
         printLog("Generate data n = %d, d = %d, %d%% NULL.",

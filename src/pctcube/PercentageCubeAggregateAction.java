@@ -47,7 +47,14 @@ public class PercentageCubeAggregateAction implements PercentageCubeVisitor {
         aggregationQueryBuilder.append("INSERT INTO ").append(olapCubeTable.getTableName()).append("\n");
         aggregationQueryBuilder.append(QuerySet.getIndentationString(1));
         aggregationQueryBuilder.append("SELECT ").append(dimensionList.toString());
-        aggregationQueryBuilder.append(", COUNT(*), SUM(").append(cube.getMeasure().getQuotedColumnName());
+        aggregationQueryBuilder.append(", COUNT(*), ");
+        if (cube.usesUDF()) {
+            aggregationQueryBuilder.append("SUMNULL(");
+        }
+        else {
+            aggregationQueryBuilder.append("SUM(");
+        }
+        aggregationQueryBuilder.append(cube.getMeasure().getQuotedColumnName());
         aggregationQueryBuilder.append(")\n").append(QuerySet.getIndentationString(1));
         aggregationQueryBuilder.append("FROM ").append(factTable.getTableName()).append("\n");
         aggregationQueryBuilder.append(QuerySet.getIndentationString(1));

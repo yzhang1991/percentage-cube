@@ -38,7 +38,13 @@ public class PercentageCubeDeltaMergeAction implements PercentageCubeVisitor {
         // CNT
         queryBuilder.append(", SUM(cnt) AS cnt, ");
         // SUM(m)
-        queryBuilder.append("SUM(").append(measure);
+        if (cube.usesUDF()) {
+            queryBuilder.append("SUMNULL(");
+        }
+        else {
+            queryBuilder.append("SUM(");
+        }
+        queryBuilder.append(measure);
         queryBuilder.append(") AS ").append(measure).append("\nINTO ").append(olapCubeTable.getTableName());
         queryBuilder.append(" FROM (\n");
         queryBuilder.append(QuerySet.getIndentationString(1));
