@@ -18,7 +18,7 @@ import pctcube.database.query.CreateTableQuerySet;
 // n = 20M (specified in the config.ini), d = 3, NULL 1 - 5%
 public class jPctCubeExpt1 {
 
-    private static final int DIMENSION_COUNT = 3;
+    private static final int DIMENSION_COUNT = 4;
     private static final String FACT_TABLE_PREFIX = "FT_EXP1_d" + DIMENSION_COUNT + "_NUL";
     private static final String HORIZONTAL_RULE =
             "------------------------------------------------------------";

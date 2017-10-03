@@ -18,15 +18,15 @@ jars() {
     jar cf $jarName -C src pctcube
 }
 
-jars-ifneeded() {
+jarsifneeded() {
     if [ ! -e $jarName ]; then
         jars;
     fi
 }
 
 start() {
-    jars-ifneeded
-    java -classpath $jarName:./third-party/* pctcube.experiments.jPctCubeExpt2
+    jarsifneeded
+    java -classpath $jarName:./third-party/* pctcube.experiments.jPctCubeExpt1
 }
 
 if [ $# -eq 0 ]; then
