@@ -18,7 +18,7 @@ import pctcube.database.query.CreateTableQuerySet;
 // n = 20M (specified in the config.ini), d = 3, NULL 1 - 5%
 public class jPctCubeExpt1 {
 
-    private static final int DIMENSION_COUNT = 4;
+    private static final int DIMENSION_COUNT = 3;
     private static final String FACT_TABLE_PREFIX = "FT_EXP1_d" + DIMENSION_COUNT + "_NUL";
     private static final String HORIZONTAL_RULE =
             "------------------------------------------------------------";
@@ -27,7 +27,7 @@ public class jPctCubeExpt1 {
         StringBuilder fullStatsBuilder = new StringBuilder();
         Config config = Config.getConfigFromFile("config.ini");
         // Try 1% to 5%
-        for (int nullPercentage = 0; nullPercentage < 20; nullPercentage+=5) {
+        for (int nullPercentage = 0; nullPercentage <= 20; nullPercentage+=5) {
             jPctCubeExpt1 experiment = new jPctCubeExpt1(config, nullPercentage);
             fullStatsBuilder.append(experiment.run()).append("\n");
         }
@@ -77,7 +77,7 @@ public class jPctCubeExpt1 {
         }
         double executionTime = runExpt();
         String retData = String.format("%8d%8d%8d%10.2f",
-                m_config.getDataSize(), 3, m_nullPercentage, executionTime);
+                m_config.getDataSize(), DIMENSION_COUNT, m_nullPercentage, executionTime);
         printHeader(this.getClass().getSimpleName());
         printLog(retData);
         printLog(HORIZONTAL_RULE);
