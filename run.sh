@@ -26,7 +26,7 @@ jarsifneeded() {
 
 start() {
     jarsifneeded
-    java -classpath $jarName:./third-party/* pctcube.experiments.jPctCubeExpt3
+    java -classpath $jarName:./third-party/* pctcube.experiments.jPctCubeExpt1
 }
 
 if [ $# -eq 0 ]; then

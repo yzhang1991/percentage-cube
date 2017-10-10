@@ -14,11 +14,11 @@ import pctcube.database.Table;
 import pctcube.database.query.CreateTableQuerySet;
 
 // Supplemental experiment 1 for the revision:
-// add NULL  1 - 5% in dimension
-// n = 20M (specified in the config.ini), d = 3, NULL 1 - 5%
+// add NULL  1 - 5% in measure
+// n = 20M (specified in the config.ini), d = 4, NULL 1 - 5%
 public class jPctCubeExpt1 {
 
-    private static final int DIMENSION_COUNT = 3;
+    private static final int DIMENSION_COUNT = 4;
     private static final String FACT_TABLE_PREFIX = "FT_EXP1_d" + DIMENSION_COUNT + "_NUL";
     private static final String HORIZONTAL_RULE =
             "------------------------------------------------------------";
@@ -103,17 +103,18 @@ public class jPctCubeExpt1 {
     }
 
     private double runWithUDF() throws SQLException {
-        printLog("Start building the cube.");
-        long startTime = System.currentTimeMillis();
-
-        m_cubeUDF.evaluate();
-        m_connection.executeQuerySet(m_cubeUDF);
-
-        long endTime = System.currentTimeMillis();
-        double duration = (endTime - startTime) / 1000.0;
-        printLog("Finished in %.2f seconds.", duration);
-        m_connection.execute("SELECT CLEAR_CACHES();");
-        return duration;
+        return 0.0;
+//        printLog("Start building the cube.");
+//        long startTime = System.currentTimeMillis();
+//
+//        m_cubeUDF.evaluate();
+//        m_connection.executeQuerySet(m_cubeUDF);
+//
+//        long endTime = System.currentTimeMillis();
+//        double duration = (endTime - startTime) / 1000.0;
+//        printLog("Finished in %.2f seconds.", duration);
+//        m_connection.execute("SELECT CLEAR_CACHES();");
+//        return duration;
     }
 
     private void generateData() throws SQLException, ClassNotFoundException {
