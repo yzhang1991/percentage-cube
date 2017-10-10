@@ -17,7 +17,7 @@ import pctcube.database.query.CreateTableQuerySet;
 
 // Supplemental experiment 3 for the revision:
 // Run an incremental query with dimension cardinality varying in 1, 2, 4, and 8.
-// n = 20M (specified in the config.ini), d = 3, original, incremental, full
+// n = 20M (specified in the config.ini), d = 4, original, incremental, full
 public class jPctCubeExpt3 {
 
     private static final int DIMENSION_COUNT = 3;

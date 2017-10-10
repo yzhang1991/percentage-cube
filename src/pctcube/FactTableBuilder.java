@@ -3,6 +3,7 @@ package pctcube;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -86,10 +87,12 @@ public class FactTableBuilder {
                 insertStmt.setString(j + 1, // index start from 1
                         String.format("d%d_group%d", j, rand.nextInt(cardinalities[j])));
             }
-            insertStmt.setFloat(columns.size(),
-                    rand.nextInt(100) >= nullIn100 ?
-                            rand.nextInt(100) :
-                            null);
+            if (rand.nextInt(100) >= nullIn100) {
+                insertStmt.setFloat(columns.size(), rand.nextInt(100));
+            }
+            else {
+                insertStmt.setNull(columns.size(), Types.FLOAT);
+            }
             insertStmt.addBatch();
             insertStmt.clearParameters();
             if (i % 1000 == 0) {
