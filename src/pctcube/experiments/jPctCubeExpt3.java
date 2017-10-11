@@ -154,7 +154,7 @@ public class jPctCubeExpt3 {
     }
 
     private void generateData() throws SQLException, ClassNotFoundException {
-        printLog("Generate data n = %d (original), %d (delta), d = %d.",
+        printLog("Generate data n = %d (original), %d (delta), cardinality = %d.",
                 m_config.getDataSize(), m_config.getDeltaDataSize(), m_cardinality);
         CreateTableQuerySet createTableQuerySet = new CreateTableQuerySet();
         createTableQuerySet.setAddDropIfExists(true);
