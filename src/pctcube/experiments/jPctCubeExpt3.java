@@ -20,7 +20,7 @@ import pctcube.database.query.CreateTableQuerySet;
 // n = 20M (specified in the config.ini), d = 4, original, incremental, full
 public class jPctCubeExpt3 {
 
-    private static final int DIMENSION_COUNT = 3;
+    private static final int DIMENSION_COUNT = 4;
     private static final String FACT_TABLE_ORIGINAL = "FT_EXP3_Original_d" + DIMENSION_COUNT + "_c";
     private static final String FACT_TABLE_DELTA = "FT_EXP3_Delta_d" + DIMENSION_COUNT + "_c";
     private static final String FACT_TABLE_FINAL = "FT_EXP3_Final_d" + DIMENSION_COUNT + "_c";
