@@ -29,7 +29,7 @@ public class jPctCubeExpt3 {
 
     public static void main(String[] args) throws ClassNotFoundException, SQLException, FileNotFoundException {
         StringBuilder fullStatsBuilder = new StringBuilder();
-        int[] cardinalities = new int[] {1, 2, 4, 8};
+        int[] cardinalities = new int[] {2, 4, 16, 256};
         Config config = Config.getConfigFromFile("config.ini");
         for (int cardinality : cardinalities) {
             jPctCubeExpt3 experiment = new jPctCubeExpt3(config, cardinality);
