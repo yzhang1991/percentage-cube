@@ -26,7 +26,7 @@ public class jPctCubeExpt4 {
         experiment.run();
     }
 
-    private int[] m_cardinalities = new int[] {100, 1000, 10000, 100000};
+    private int[] m_cardinalities = new int[] {100, 1000, 10000, 100000, 10};
     private Database m_database = new Database();
     private FactTableBuilder m_factTableBuilder;
     private Table m_factTable;
