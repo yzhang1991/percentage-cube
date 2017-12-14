@@ -17,8 +17,6 @@ public class jPctCubeExpt4 {
 
     private static final int DIMENSION_COUNT = 5;
     private static final String FACT_TABLE = "FT_EXP4";
-    private static final String HORIZONTAL_RULE =
-            "------------------------------------------------------------";
 
     public static void main(String[] args) throws ClassNotFoundException, SQLException, FileNotFoundException {
         Config config = Config.getConfigFromFile("config.ini");

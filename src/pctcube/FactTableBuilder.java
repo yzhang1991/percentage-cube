@@ -73,7 +73,7 @@ public class FactTableBuilder {
         }
         List<Column> columns = m_table.getColumns();
         Random rand = new Random();
-        if (cardinalities.length != columns.size()) {
+        if (cardinalities.length != columns.size() - 1) {
             throw new RuntimeException("Not enough cardinalities are specified.");
         }
         PreparedStatement insertStmt = conn.getConnection().prepareStatement(m_insertQuery);
