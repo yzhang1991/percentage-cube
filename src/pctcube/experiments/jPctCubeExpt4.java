@@ -15,7 +15,7 @@ import pctcube.database.query.CreateTableQuerySet;
 // Generate the data for table 8.
 public class jPctCubeExpt4 {
 
-    private static final int DIMENSION_COUNT = 5;
+    private static final int DIMENSION_COUNT = 7;
     private static final String FACT_TABLE = "fact";
 
     public static void main(String[] args) throws ClassNotFoundException, SQLException, FileNotFoundException {
@@ -24,7 +24,7 @@ public class jPctCubeExpt4 {
         experiment.run();
     }
 
-    private int[] m_cardinalities = new int[] {100, 1000, 10000, 100000, 10};
+    private int[] m_cardinalities = new int[] {100, 1000, 10000, 100000, 1000000, 10000000, 10};
     private Database m_database = new Database();
     private FactTableBuilder m_factTableBuilder;
     private Table m_factTable;
