@@ -68,8 +68,7 @@ public class jPctCubeExpt4 {
             // Join
             queryBuilder.append("SELECT Findv.d").append(i).append(", Findv.d4");
             queryBuilder.append(", (CASE WHEN Ftotal.m <> 0 THEN Findv.m/Ftotal.m ELSE NULL END) AS pct ");
-            queryBuilder.append("FROM Ftotal JOIN Findv ON Ftotal.d").append(i).append(" = Findv.d").append(i);
-            queryBuilder.append(" AND Ftotal.d4 = Findv.d4;");
+            queryBuilder.append("FROM Ftotal JOIN Findv ON Ftotal.d").append(i).append(" = Findv.d").append(i).append(";");
 
             printLog("Start percentage aggregation using group-by, total by d%d, break down by d4.", i);
             long startTime = System.currentTimeMillis();
