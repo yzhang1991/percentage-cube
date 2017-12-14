@@ -65,19 +65,16 @@ public class FactTableBuilder {
     }
 
     public void populateData(int rowCount,
-                             int nullIn100,
-                             int cardinality,
-                             DbConnection conn) throws SQLException {
+            int nullIn100,
+            int[] cardinalities,
+            DbConnection conn) throws SQLException {
         if (conn.getConnection() == null) {
             return;
         }
-        Random rand = new Random();
         List<Column> columns = m_table.getColumns();
-        int[] cardinalities = new int[m_table.getColumns().size() - 1];
-        for (int i = 0; i < columns.size() - 1; i++) {
-            cardinalities[i] = cardinality == 0 ?
-                               rand.nextInt(MAX_GROUP_PER_DIMENSION) + 1 :
-                               cardinality;
+        Random rand = new Random();
+        if (cardinalities.length != columns.size()) {
+            throw new RuntimeException("Not enough cardinalities are specified.");
         }
         PreparedStatement insertStmt = conn.getConnection().prepareStatement(m_insertQuery);
         Statement stmt = conn.getConnection().createStatement();
@@ -100,5 +97,21 @@ public class FactTableBuilder {
             }
         }
         insertStmt.executeBatch();
+    }
+
+
+    public void populateData(int rowCount,
+                             int nullIn100,
+                             int cardinality,
+                             DbConnection conn) throws SQLException {
+        List<Column> columns = m_table.getColumns();
+        Random rand = new Random();
+        int[] cardinalities = new int[columns.size() - 1];
+        for (int i = 0; i < columns.size() - 1; i++) {
+            cardinalities[i] = cardinality == 0 ?
+                               rand.nextInt(MAX_GROUP_PER_DIMENSION) + 1 :
+                               cardinality;
+        }
+        populateData(rowCount, nullIn100, cardinalities, conn);
     }
 }
