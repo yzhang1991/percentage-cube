@@ -15,7 +15,7 @@ import pctcube.database.query.CreateTableQuerySet;
 // Generate the data for table 8.
 public class jPctCubeExpt4 {
 
-    private static final int DIMENSION_COUNT = 7;
+    private static final int DIMENSION_COUNT = 8;
     private static final String FACT_TABLE = "fact";
 
     public static void main(String[] args) throws ClassNotFoundException, SQLException, FileNotFoundException {
@@ -24,7 +24,7 @@ public class jPctCubeExpt4 {
         experiment.run();
     }
 
-    private int[] m_cardinalities = new int[] {100, 1000, 10000, 100000, 1000000, 10000000, 10};
+    private int[] m_cardinalities = new int[] {100, 1000, 10000, 100000, 1000000, 10000000, 10, 100};
     private Database m_database = new Database();
     private FactTableBuilder m_factTableBuilder;
     private Table m_factTable;
@@ -49,51 +49,55 @@ public class jPctCubeExpt4 {
 
         StringBuffer result = new StringBuffer();
         result.append(String.format("%12s%10s%10s\n", "cardinality", "GROUP-BY", "OLAP"));
+        result.append(String.format("%6s%6s\n", "|L|", "|R|"));
+        // break down by key
+        for (int j = 6; j < 8; j++) {
+            // total by key
+            for (int i = 0; i < 6; i++) {
+                m_connection.execute("DROP TABLE IF EXISTS Findv;");
+                m_connection.execute("DROP TABLE IF EXISTS Ftotal;");
+                m_connection.execute("DROP TABLE IF EXISTS pct;");
 
-        // total by key
-        for (int i = 0; i < 4; i++) {
-            m_connection.execute("DROP TABLE IF EXISTS Findv;");
-            m_connection.execute("DROP TABLE IF EXISTS Ftotal;");
-            m_connection.execute("DROP TABLE IF EXISTS pct;");
+                // Get Findv
+                StringBuffer queryBuilder = new StringBuffer("SELECT ");
+                queryBuilder.append("d").append(i).append(", d").append(j).append(", SUM(m) AS m INTO Findv FROM ");
+                queryBuilder.append(FACT_TABLE).append(" GROUP BY d").append(i).append(", d").append(j).append(";\n");
 
-            // Get Findv
-            StringBuffer queryBuilder = new StringBuffer("SELECT ");
-            queryBuilder.append("d").append(i).append(", d4, SUM(m) AS m INTO Findv FROM ");
-            queryBuilder.append(FACT_TABLE).append(" GROUP BY d").append(i).append(", d4;\n");
+                // Get Ftotal
+                queryBuilder.append("SELECT d").append(i).append(", SUM(m) AS m INTO Ftotal FROM Findv ");
+                queryBuilder.append(" GROUP BY d").append(i).append(";\n");
 
-            // Get Ftotal
-            queryBuilder.append("SELECT d").append(i).append(", SUM(m) AS m INTO Ftotal FROM Findv ");
-            queryBuilder.append(" GROUP BY d").append(i).append(";\n");
+                // Join
+                queryBuilder.append("SELECT Findv.d").append(i).append(", Findv.d").append(j);
+                queryBuilder.append(", (CASE WHEN Ftotal.m <> 0 THEN Findv.m/Ftotal.m ELSE NULL END) AS pct ");
+                queryBuilder.append("FROM Ftotal JOIN Findv ON Ftotal.d").append(i).append(" = Findv.d").append(i).append(";");
 
-            // Join
-            queryBuilder.append("SELECT Findv.d").append(i).append(", Findv.d4");
-            queryBuilder.append(", (CASE WHEN Ftotal.m <> 0 THEN Findv.m/Ftotal.m ELSE NULL END) AS pct ");
-            queryBuilder.append("FROM Ftotal JOIN Findv ON Ftotal.d").append(i).append(" = Findv.d").append(i).append(";");
+                printLog("Start percentage aggregation using group-by, total by d%d, break down by d%d.", i, j);
+                long startTime = System.currentTimeMillis();
+                m_connection.execute(queryBuilder.toString());
+                long endTime = System.currentTimeMillis();
+                double durationGroupBy = (endTime - startTime) / 1000.0;
+                printLog("Finished in %.2f seconds.", durationGroupBy);
+                m_connection.execute("SELECT CLEAR_CACHES();");
 
-            printLog("Start percentage aggregation using group-by, total by d%d, break down by d4.", i);
-            long startTime = System.currentTimeMillis();
-            m_connection.execute(queryBuilder.toString());
-            long endTime = System.currentTimeMillis();
-            double durationGroupBy = (endTime - startTime) / 1000.0;
-            printLog("Finished in %.2f seconds.", durationGroupBy);
-            m_connection.execute("SELECT CLEAR_CACHES();");
+                // OLAP
+                queryBuilder = new StringBuffer("SELECT ");
+                queryBuilder.append("d").append(i).append(", d").append(j).append(", (CASE WHEN Y <> 0 THEN X/Y ELSE NULL END) AS pct FROM ");
+                queryBuilder.append("(SELECT d").append(i).append(", d").append(j).append(", SUM(m) OVER (PARTITION BY d").append(i);
+                queryBuilder.append(", d").append(j).append(") AS X, SUM(m) OVER (PARTITION BY d").append(i).append(") AS Y, ");
+                queryBuilder.append("row_number() OVER (PARTITION BY d").append(i).append(", d").append(j).append(") AS rnumber FROM ");
+                queryBuilder.append(FACT_TABLE).append(") foo WHERE rnumber = 1;");
 
-            // OLAP
-            queryBuilder = new StringBuffer("SELECT ");
-            queryBuilder.append("d").append(i).append(", d4, (CASE WHEN Y <> 0 THEN X/Y ELSE NULL END) AS pct FROM ");
-            queryBuilder.append("(SELECT d").append(i).append(", d4, SUM(m) OVER (PARTITION BY d").append(i);
-            queryBuilder.append(", d4) AS X, SUM(m) OVER (PARTITION BY d").append(i).append(") AS Y, ");
-            queryBuilder.append("row_number() OVER (PARTITION BY d").append(i).append(", d4) AS rnumber FROM ");
-            queryBuilder.append(FACT_TABLE).append(") foo WHERE rnumber = 1;");
+                printLog("Start percentage aggregation using OLAP, total by d%d, break down by d%d.", i, j);
+                startTime = System.currentTimeMillis();
+                m_connection.execute(queryBuilder.toString());
+                endTime = System.currentTimeMillis();
+                double durationOLAP = (endTime - startTime) / 1000.0;
+                printLog("Finished in %.2f seconds.", durationOLAP);
+                m_connection.execute("SELECT CLEAR_CACHES();");
+                result.append(String.format("%6d%6d%10.2f%10.2f\n", m_cardinalities[i], m_cardinalities[j], durationGroupBy, durationOLAP));
+            }
 
-            printLog("Start percentage aggregation using OLAP, total by d%d, break down by d4.", i);
-            startTime = System.currentTimeMillis();
-            m_connection.execute(queryBuilder.toString());
-            endTime = System.currentTimeMillis();
-            double durationOLAP = (endTime - startTime) / 1000.0;
-            printLog("Finished in %.2f seconds.", durationOLAP);
-            m_connection.execute("SELECT CLEAR_CACHES();");
-            result.append(String.format("%12d%10.2f%10.2f\n", m_cardinalities[i], durationGroupBy, durationOLAP));
         }
         printLog(result.toString());
     }
