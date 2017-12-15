@@ -48,8 +48,8 @@ public class jPctCubeExpt4 {
         }
 
         StringBuffer result = new StringBuffer();
-        result.append(String.format("%12s%10s%10s\n", "cardinality", "GROUP-BY", "OLAP"));
-        result.append(String.format("%6s%6s\n", "|L|", "|R|"));
+        result.append(String.format("%20s%10s%10s\n", "cardinality", "GROUP-BY", "OLAP"));
+        result.append(String.format("%10s%10s\n", "|L|", "|R|"));
         // break down by key
         for (int j = 6; j < 8; j++) {
             // total by key
@@ -95,7 +95,7 @@ public class jPctCubeExpt4 {
                 double durationOLAP = (endTime - startTime) / 1000.0;
                 printLog("Finished in %.2f seconds.", durationOLAP);
                 m_connection.execute("SELECT CLEAR_CACHES();");
-                result.append(String.format("%6d%6d%10.2f%10.2f\n", m_cardinalities[i], m_cardinalities[j], durationGroupBy, durationOLAP));
+                result.append(String.format("%10d%10d%10.2f%10.2f\n", m_cardinalities[i], m_cardinalities[j], durationGroupBy, durationOLAP));
             }
 
         }
