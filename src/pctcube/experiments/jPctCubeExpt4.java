@@ -27,17 +27,30 @@ public class jPctCubeExpt4 {
     private int[] m_cardinalities = new int[] {100, 1000, 10000, 100000, 1000000, 10000000, 10, 100};
     private Database m_database = new Database();
     private FactTableBuilder m_factTableBuilder;
+    private FactTableBuilder m_findvTableBuilder;
+    private FactTableBuilder m_ftotalTableBuilder;
+    private FactTableBuilder m_pctTableBuilder;
     private Table m_factTable;
+    private Table m_findv;
+    private Table m_ftotal;
+    private Table m_pct;
     private Config m_config;
     private DbConnection m_connection;
 
     public jPctCubeExpt4(Config config) throws ClassNotFoundException, SQLException, FileNotFoundException {
         // Build the fact tables.
         m_factTableBuilder = new FactTableBuilder(FACT_TABLE, DIMENSION_COUNT);
+        m_findvTableBuilder = new FactTableBuilder("Findv", DIMENSION_COUNT);
+        m_ftotalTableBuilder = new FactTableBuilder("Ftotal", DIMENSION_COUNT);
+        m_pctTableBuilder = new FactTableBuilder("pct", DIMENSION_COUNT);
         m_factTable = m_factTableBuilder.getTable();
+        m_findv = m_findvTableBuilder.getTable();
+        m_ftotal = m_ftotalTableBuilder.getTable();
+        m_pct = m_pctTableBuilder.getTable();
+        m_pct.getColumnByName("m").setColumnName("pct");
         // Add those tables to the program-maintained database catalog, so the query generator
         // can be aware of their existences.
-        m_database.addTables(m_factTable);
+        m_database.addTables(m_factTable, m_findv, m_ftotal, m_pct);
         m_config = config;
         m_connection = new DbConnection(config);
     }
@@ -47,6 +60,17 @@ public class jPctCubeExpt4 {
             generateData();
         }
 
+        CreateTableQuerySet createTableQuerySet = new CreateTableQuerySet();
+        createTableQuerySet.setAddDropIfExists(true);
+
+        m_findv.accept(createTableQuerySet);
+        createTableQuerySet.addQuery(m_findvTableBuilder.getProjectionDDL());
+        m_ftotal.accept(createTableQuerySet);
+        createTableQuerySet.addQuery(m_ftotalTableBuilder.getProjectionDDL());
+        m_pct.accept(createTableQuerySet);
+        createTableQuerySet.addQuery(m_pctTableBuilder.getProjectionDDL());
+        m_connection.executeQuerySet(createTableQuerySet);
+
         StringBuffer result = new StringBuffer();
         result.append(String.format("%20s%10s%10s\n", "cardinality", "GROUP-BY", "OLAP"));
         result.append(String.format("%10s%10s\n", "|L|", "|R|"));
@@ -54,21 +78,21 @@ public class jPctCubeExpt4 {
         for (int j = 6; j < 8; j++) {
             // total by key
             for (int i = 0; i < 6; i++) {
-                m_connection.execute("DROP TABLE IF EXISTS Findv;");
-                m_connection.execute("DROP TABLE IF EXISTS Ftotal;");
-                m_connection.execute("DROP TABLE IF EXISTS pct;");
+                m_connection.execute("TRUNCATE TABLE Findv;");
+                m_connection.execute("TRUNCATE TABLE Ftotal;");
+                m_connection.execute("TRUNCATE TABLE pct;");
 
                 // Get Findv
-                StringBuffer queryBuilder = new StringBuffer("SELECT ");
-                queryBuilder.append("d").append(i).append(", d").append(j).append(", SUM(m) AS m INTO Findv FROM ");
+                StringBuffer queryBuilder = new StringBuffer("INSERT INTO Findv SELECT ");
+                queryBuilder.append("d").append(i).append(", d").append(j).append(", SUM(m) AS m FROM ");
                 queryBuilder.append(FACT_TABLE).append(" GROUP BY d").append(i).append(", d").append(j).append(";\n");
 
                 // Get Ftotal
-                queryBuilder.append("SELECT d").append(i).append(", SUM(m) AS m INTO Ftotal FROM Findv ");
+                queryBuilder.append("INSERT INTO Ftotal SELECT d").append(i).append(", SUM(m) AS m FROM Findv ");
                 queryBuilder.append(" GROUP BY d").append(i).append(";\n");
 
                 // Join
-                queryBuilder.append("SELECT Findv.d").append(i).append(", Findv.d").append(j);
+                queryBuilder.append("INSERT INTO pct SELECT Findv.d").append(i).append(", Findv.d").append(j);
                 queryBuilder.append(", (CASE WHEN Ftotal.m <> 0 THEN Findv.m/Ftotal.m ELSE NULL END) AS pct ");
                 queryBuilder.append("FROM Ftotal JOIN Findv ON Ftotal.d").append(i).append(" = Findv.d").append(i).append(";");
 
@@ -79,9 +103,10 @@ public class jPctCubeExpt4 {
                 double durationGroupBy = (endTime - startTime) / 1000.0;
                 printLog("Finished in %.2f seconds.", durationGroupBy);
                 m_connection.execute("SELECT CLEAR_CACHES();");
+                m_connection.execute("TRUNCATE TABLE pct;");
 
                 // OLAP
-                queryBuilder = new StringBuffer("SELECT ");
+                queryBuilder = new StringBuffer("INSERT INTO pct SELECT ");
                 queryBuilder.append("d").append(i).append(", d").append(j).append(", (CASE WHEN Y <> 0 THEN X/Y ELSE NULL END) AS pct FROM ");
                 queryBuilder.append("(SELECT d").append(i).append(", d").append(j).append(", SUM(m) OVER (PARTITION BY d").append(i);
                 queryBuilder.append(", d").append(j).append(") AS X, SUM(m) OVER (PARTITION BY d").append(i).append(") AS Y, ");
